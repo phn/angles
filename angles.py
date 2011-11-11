@@ -60,7 +60,7 @@ import warnings
 import math
 import re
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 
 def r2d(r):

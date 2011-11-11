@@ -98,6 +98,12 @@ Parsing sexagesimal strings::
      'units': 'hours',
      'vals': [12.0, 13.0, 12.4]}
 
+Parse string containing positions::
+
+   >>> pposition("12 22 54.899 +15 49 20.57")
+   (12.381916388888889, 15.822380555555556)
+   >>> pposition("12 22")
+   (12.0, 22.0)
 
 Separation angle along a great circle, using vectors::
 
@@ -237,6 +243,16 @@ Class for latitudinal angles::
     +89DD 59MM 00.000SS
 
 Class for points on a unit sphere::
+
+    >>> a = angles.AngularPosition(hd="12 22 54.899 +15 49 20.57")
+    >>> print a
+    +12HH 22MM 54.899SS +15DD 49MM 20.570SS
+    >>> a = angles.AngularPosition(hd="12dd 22 54.899 +15 49 20.57")
+    >>> print a
+    +00HH 49MM 31.660SS +15DD 49MM 20.570SS
+    >>> a = angles.AngularPosition(hd="12d 22 54.899 +15 49 20.57")
+    >>> print a
+    +00HH 49MM 31.660SS +15DD 49MM 20.570SS
 
     >>> pos1 = AngularPosition(alpha=12.0, delta=90.0)
     >>> pos2 = AngularPosition(alpha=12.0, delta=0.0)

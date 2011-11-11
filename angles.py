@@ -723,6 +723,104 @@ def phmsdms(hmsdms):
     return dict(sign=sign, units=units, vals=vals, parts=parts)
 
 
+def pposition(hd, details=False):
+    """Parse string into angular position.
+
+    A string containing 2 or 6 numbers is parsed, and the numbers are
+    converted into decimal numbers. In the former case the numbers are
+    assumed to be floats. In the latter case, the numbers are assumed
+    to be sexagesimal.
+
+    Parameters
+    ----------
+    hd: str
+      String containing 2 or 6 numbers. The numbers can be spearated
+      with character or characters other than ".", "-", "+".
+
+      The string must contain either 2 or 6 numbers.
+
+    details: bool
+      The detailed result from parsing the string is returned. See
+      "Returns" section below.
+
+      Default is False.
+
+    Returns
+    -------
+    x: (float, float) or dict
+      A tuple containing decimal equivalents of the parsed numbers. If
+      the string contains 6 numbers then they are assumed be
+      sexagesimal components.
+
+      If ``details`` is True then a dictionary with the following keys
+      is returned:
+
+        x: float
+          The first number.
+        y: float
+          The second number
+        numvals: int
+          Number of items parsed; 2 or 6.
+        raw_x: dict
+          The result returned by ``phmsdms`` for the first number.
+        raw_y: dict
+          The result returned by ``phmsdms`` for the second number.
+
+      It is up to the user to interpret the units of the numbers
+      returned.
+
+    Raises
+    ------
+    ValueError:
+      The exception is raised if the string cannot be interpreted as a
+      sequence of 2 or 6 numbers.
+
+    Examples
+    --------
+    The position of M100 reported by SIMBAD is
+    "12 22 54.899 +15 49 20.57". This can be easily parsed in the
+    following manner.
+
+    >>> from angles import pposition
+    >>> ra, de = pposition("12 22 54.899 +15 49 20.57")
+    >>> ra
+    12.381916388888889
+    >>> de
+    15.822380555555556
+
+    """
+    # Split at any character other than a digit, ".", "-", and "+".
+    p = re.split(r"[^\d\-+.]*", hd)
+    if len(p) not in [2, 6]:
+        raise ValueError("Input must contain either 2 or 6 numbers.")
+
+    # Two floating point numbers if string has 2 numbers.
+    if len(p) == 2:
+        x, y = float(p[0]), float(p[1])
+        if details:
+            numvals = 2
+            raw_x = p[0]
+            raw_y = p[1]
+    # Two sexagesimal numbers if string has 6 numbers.
+    elif len(p) == 6:
+        x_p = phmsdms(" ".join(p[:3]))
+        x = sexa2deci(x_p['sign'], *x_p['vals'])
+        y_p = phmsdms(" ".join(p[3:]))
+        y = sexa2deci(y_p['sign'], *y_p['vals'])
+        if details:
+            raw_x = x_p
+            raw_y = y_p
+            numvals = 6
+
+    if details:
+        result = dict(x=x, y=y, numvals=numvals, raw_x=raw_x,
+                      raw_y=raw_y)
+    else:
+        result = x, y
+
+    return result
+
+
 def sep(a1, b1, a2, b2):
     """Angular spearation between two points on a unit sphere.
 
@@ -1723,6 +1821,17 @@ class AngularPosition(object):
 
     Parameters
     ----------
+    hd: str
+      The string is interpreted as contianing 2 sxagesimal numbers. The
+      first number is taken to be in the HMS format, and the second is
+      taken to be in the DMS format.
+
+      For example "12 22 54.899 +15 49 20.57" is interpreted as a
+      position with alpha angle equal to 12hh 22mm and 54.899ss, and a
+      delta angle +15dd 49mm 20.57ss.
+
+      If ``hd`` is given as input, all other parameters are ignored.
+
     alpha : float, str
         The longitudinal angle. If value is a float then it is taken to
         be the angle in hours. If value is str then it is treated as a
@@ -1758,6 +1867,16 @@ class AngularPosition(object):
 
     Examples
     --------
+    >>> a = angles.AngularPosition(hd="12 22 54.899 +15 49 20.57")
+    >>> print a
+    +12HH 22MM 54.899SS +15DD 49MM 20.570SS
+    >>> a = angles.AngularPosition(hd="12dd 22 54.899 +15 49 20.57")
+    >>> print a
+    +00HH 49MM 31.660SS +15DD 49MM 20.570SS
+    >>> a = angles.AngularPosition(hd="12d 22 54.899 +15 49 20.57")
+    >>> print a
+    +00HH 49MM 31.660SS +15DD 49MM 20.570SS
+
     >>> pos1 = AngularPosition(alpha=12.0, delta=90.0)
     >>> pos2 = AngularPosition(alpha=12.0, delta=0.0)
     >>> angles.r2d(pos2.bear(pos1))
@@ -1794,15 +1913,49 @@ class AngularPosition(object):
     # representation.
     dlim = " "
 
-    def __init__(self, alpha=0.0, delta=0.0):
-        if type(alpha) == type(" "):
-            self._alpha = AlphaAngle(sg=alpha)
+    def __init__(self, hd=None, alpha=0.0, delta=0.0, fh=True):
+        if hd:
+            if type(hd) != type(" "):
+                raise ValueError("hd must be a string.")
+
+            # There are several possible combination of units in the
+            # string. For simplicity, use set of rules to get alpha
+            # value in hours and delta value in degrees.
+            r = pposition(hd, details=True)
+            if r['numvals'] == 6:
+                raw_x = r['raw_x']
+                if raw_x['units'] == "degrees" and ("d" in hd or "dd" in hd):
+                    # phmsdms called by pposition returns degrees if "hh"
+                    # or "h" is not in hd. We want the reverse here.
+                    # Assume degrees only if "d" or "dd" is present in hd.
+                    x = d2h(r['x'])
+                else:
+                    # Assume that this is hours.
+                    x = r['x']
+
+                raw_y = r['raw_y']
+                if raw_y['units'] == "hours":
+                    y = h2d(r['y'])
+                else:
+                    y = r['y']  # Assume degrees.
+
+            else:
+                x = r['x']
+                y = r['y']
+
+            self._alpha = AlphaAngle(h=x)
+            self._delta = DeltaAngle(d=y)
+
         else:
-            self._alpha = AlphaAngle(h=alpha)
-        if type(delta) == type(" "):
-            self._delta = DeltaAngle(sg=delta)
-        else:
-            self._delta = DeltaAngle(d=delta)
+            if type(alpha) == type(" "):
+                self._alpha = AlphaAngle(sg=alpha)
+            else:
+                self._alpha = AlphaAngle(h=alpha)
+
+            if type(delta) == type(" "):
+                self._delta = DeltaAngle(sg=delta)
+            else:
+                self._delta = DeltaAngle(d=delta)
 
     def __getalpha(self):
         return self._alpha

@@ -137,7 +137,9 @@ def normalize(num, lower=0, upper=360, b=False):
     b : bool
         Type of normalization. Default is False. See notes.
 
-    The range must be symmetric about 0 or lower == 0.
+        When b=True, the range must be symmetric about 0.
+        When b=False, the range must be symmetric about 0 or ``lower`` must
+        be equal to 0.
 
     Returns
     -------
@@ -159,12 +161,14 @@ def normalize(num, lower=0, upper=360, b=False):
     becomes 0. Negative numbers move from higher to lower numbers. So,
     -1 normalized to [0 - 360) becomes 359.
 
+    When b=False range must be symmetric about 0 or lower=0.
+
     If the keyword `b == True`, then the given number is considered to
     "bounce" between the two limits. So, -91 normalized to [-90, 90],
     becomes -89, instead of 89. In this case the range is [lower,
     upper]. This code is based on the function `fmt_delta` of `TPM`.
 
-    Range must be symmetric about 0 or lower == 0.
+    When b=True range must be symmetric about 0.
 
     Examples
     --------
@@ -202,6 +206,15 @@ def normalize(num, lower=0, upper=360, b=False):
     >>> normalize(271, -90, 90, b=True)
     -89.0
     """
+    if lower >= upper:
+        ValueError("lower must be lesser than upper")
+    if not b:
+        if not ((lower + upper == 0) or (lower == 0)):
+            raise ValueError('When b=False lower=0 or range must be symmetric about 0.')
+    else:
+        if not (lower + upper == 0):
+            raise ValueError('When b=True range must be symmetric about 0.')
+
     from math import floor, ceil
     # abs(num + upper) and abs(num - lower) are needed, instead of
     # abs(num), since the lower and upper limits need not be 0. We need
@@ -209,10 +222,6 @@ def normalize(num, lower=0, upper=360, b=False):
     # <value> or upper - <value>, respectively.
     res = num
     if not b:
-        if lower >= upper:
-            raise ValueError("Invalid lower and upper limits: (%s, %s)" %
-                             (lower, upper))
-
         res = num
         if num > upper or num == lower:
             num = lower + abs(num + upper) % (abs(lower) + abs(upper))

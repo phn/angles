@@ -137,6 +137,8 @@ def normalize(num, lower=0, upper=360, b=False):
     b : bool
         Type of normalization. Default is False. See notes.
 
+    The range must be symmetric about 0 or lower == 0.
+
     Returns
     -------
     n : float

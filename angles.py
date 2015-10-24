@@ -795,6 +795,7 @@ def pposition(hd, details=False):
     15.822380555555556
 
     """
+    # :TODO: split two angles based on user entered separator and process each part separately.
     # Split at any character other than a digit, ".", "-", and "+".
     p = re.split(r"[^\d\-+.]*", hd)
     if len(p) not in [2, 6]:

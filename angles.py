@@ -473,7 +473,7 @@ def sexa2deci(sign, hd, mm, ss, todeg=False):
     return d
 
 
-def fmt_angle(val, s1=" ", s2=" ", s3=" ", pre=3, trunc=False,
+def fmt_angle(val, s1=" ", s2=" ", s3="", pre=3, trunc=False,
               lower=None, upper=None, b=False, upper_trim=False):
     """Return sexagesimal string of given angle in degrees or hours.
 
@@ -518,35 +518,30 @@ def fmt_angle(val, s1=" ", s2=" ", s3=" ", pre=3, trunc=False,
     Examples
     --------
     >>> fmt_angle(12.348978659, pre=4, trunc=True)
-    '+12 20 56.3231 '
+    '+12 20 56.3231'
     >>> fmt_angle(12.348978659, pre=5)
-    '+12 20 56.32317 '
+    '+12 20 56.32317'
     >>> fmt_angle(12.348978659, s1='HH ', s2='MM ', s3='SS', pre=5)
     '+12HH 20MM 56.32317SS'
 
     >>> x = 23+59/60.0+59.99999/3600.0
     >>> fmt_angle(x)
-    '+24 00 00.000 '
+    '+24 00 00.000'
     >>> fmt_angle(x, lower=0, upper=24, upper_trim=True)
-    '+00 00 00.000 '
+    '+00 00 00.000'
     >>> fmt_angle(x, pre=5)
-    '+23 59 59.99999 '
+    '+23 59 59.99999'
     >>> fmt_angle(-x, lower=0, upper=24, upper_trim=True)
-    '+00 00 00.000 '
+    '+00 00 00.000'
     >>> fmt_angle(-x)
-    '-24 00 00.000 '
+    '-24 00 00.000'
 
     """
-    # Don't normalize if range not given. 0 is valid.
-    if lower == None or upper == None:
-        n = val
-    else:
-        n = normalize(val, lower=lower, upper=upper, b=b)
-
-    x = deci2sexa(n, pre=pre, trunc=trunc, lower=lower, upper=upper,
+    x = deci2sexa(val, pre=pre, trunc=trunc, lower=lower, upper=upper,
                   upper_trim=upper_trim)
 
-    p = "{3:0" + "{0}.{1}".format(pre + 3, pre) + "f}" + s3
+    left_digits_plus_deci_point = 3 if pre > 0 else 2
+    p = "{3:0" + "{0}.{1}".format(pre + left_digits_plus_deci_point, pre) + "f}" + s3
     p = "{0}{1:02d}" + s1 + "{2:02d}" + s2 + p
 
     return p.format("-" if x[0] < 0 else "+", *x[1:])

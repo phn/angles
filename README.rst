@@ -6,6 +6,8 @@ Angles
 .. _pip: http://pypi.python.org/pypi/pip
 .. _easy_install: packages.python.org/distribute/easy_install.html
 
+.. image:: https://travis-ci.org/phn/angles.svg?branch=master
+    :target: https://travis-ci.org/phn/angles
 
 Angles module defines several classes for representing angles, and
 positions on a unit sphere. It also has several functions for

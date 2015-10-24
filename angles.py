@@ -548,7 +548,7 @@ def fmt_angle(val, s1=" ", s2=" ", s3="", pre=3, trunc=False,
 
 
 def phmsdms(hmsdms):
-    """Parse a string containing a sexageismal number.
+    """Parse a string containing a sexagesimal number.
 
     This can handle several types of delimiters and will process
     reasonably valid strings. See examples.
@@ -661,7 +661,7 @@ def phmsdms(hmsdms):
         for i, j in enumerate(rp):
             if j is not None:
                 break
-        if  i == 0:
+        if i == 0:
             # Seconds part already filled.
             raise ValueError("Invalid string.")
         elif i == 1:

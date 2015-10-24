@@ -354,7 +354,7 @@ def deci2sexa(deci, pre=3, trunc=False, lower=None, upper=None,
     (1, 23, 59, 59.99999)
 
     """
-    if lower != None and upper != None:
+    if lower is not None and upper is not None:
         deci = normalize(deci, lower=lower, upper=upper, b=b)
 
     sign = 1
@@ -386,7 +386,7 @@ def deci2sexa(deci, pre=3, trunc=False, lower=None, upper=None,
 
     hd = int(hd)
     mm = int(mm)
-    if lower != None and upper != None and upper_trim:
+    if lower is not None and upper is not None and upper_trim:
         # For example 24h0m0s => 0h0m0s.
         if hd == upper:
             hd = lower

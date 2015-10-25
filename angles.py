@@ -921,7 +921,7 @@ def bear(a1, b1, a2, b2):
         0 is returned.
 
     Results agree with those from SLALIB rountine sla_dbear. See
-    _test_with_slalib().
+    test_bear_against_slalib_dbear() in test_angles.py.
 
     Examples
     --------
@@ -1039,7 +1039,7 @@ class Angle(object):
         Separator between first and second parts of sexagesimal string.
     s2 : str
         Separator between second and third parts of sexagesimal string.
-    s1 : str
+    s3 : str
         Separator after the third part of sexagesimal string.
 
     Notes
@@ -1157,10 +1157,10 @@ class Angle(object):
     trunc = False
     s1 = " "
     s2 = " "
-    s3 = " "
+    s3 = ""
 
     def __init__(self, sg=None, **kwargs):
-        if sg != None:
+        if sg is not None:
             # Insert this into kwargs so that the conditional below
             # gets it.
             kwargs['sg'] = str(sg)
@@ -1187,15 +1187,15 @@ class Angle(object):
             if "d" in kwargs:
                 self._iunit = 1
                 self._setnorm(d2r(sexa2deci(1, kwargs['d'],
-                                      kwargs.get('mm', 0.0),
-                                      kwargs.get('ss', 0.0))))
+                                            kwargs.get('mm', 0.0),
+                                            kwargs.get('ss', 0.0))))
                 if "h" in kwargs:
                     warnings.warn("h not used.")
             elif "h" in kwargs:
                 self._iunit = 2
                 self._setnorm(h2r(sexa2deci(1, kwargs['h'],
-                                      kwargs.get('mm', 0.0),
-                                      kwargs.get('ss', 0.0))))
+                                            kwargs.get('mm', 0.0),
+                                            kwargs.get('ss', 0.0))))
 
         self._ounit = self._units[self._iunit]
 
@@ -1411,7 +1411,7 @@ class AlphaAngle(Angle):
 
     """
     def __init__(self, sg=None, **kwargs):
-        Angle.__init__(self, sg, **kwargs)
+        super(AlphaAngle, self).__init__(sg, **kwargs)
         self.__ounit = "hours"
         self.s1 = "HH "
         self.s2 = "MM "
@@ -1456,7 +1456,7 @@ class AlphaAngle(Angle):
         return self.hms[1]
 
     def __sethh(self, val):
-        if type(val) != type(1):
+        if not isinstance(val, int):
             raise ValueError("HH takes only integers.")
         x = self.hms
         self.h = sexa2deci(x[0], val, x[2], x[3])
@@ -1467,7 +1467,7 @@ class AlphaAngle(Angle):
         return self.hms[2]
 
     def __setmm(self, val):
-        if type(val) != type(1):
+        if not isinstance(val, int):
             raise ValueError("MM takes integers only.")
         x = self.hms
         self.h = sexa2deci(x[0], x[1], val, x[3])

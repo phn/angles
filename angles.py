@@ -850,7 +850,7 @@ def sep(a1, b1, a2, b2):
     always in the range [0, π].
 
     Results agree with those from SLALIB routine sla_dsep. See
-    _test_with_slalib().
+    test_sep_against_slalib_dsep() in test_angles.py.
 
 
     Examples
@@ -2042,60 +2042,3 @@ class AngularPosition(object):
         if type(other) != type(self):
             raise TypeError("Subtraction needs an AngularPosition object.")
         return self.sep(other)
-
-
-# Test for AngularPosition methods sep() and bear() with SLALIB
-# sla_dsep and sla_bear respectively. Needs PySLALIB. On my computer
-# the results are identical to those from SLALIB.
-def _test_with_slalib():
-    try:
-        from pyslalib import slalib
-    except ImportError:
-        print("Tests not run on this machine.")
-        print("PySLALIB is needed to run tests on this machine.")
-        print("When run the results are identical to those from SLALIB.")
-        exit(1)
-
-    import random
-    import math
-    #from angles import AngularPosition
-
-    # Random positions.
-    alpha = [random.uniform(0, 2 * math.pi) for i in range(100)]
-    delta = [random.uniform(-math.pi / 2, math.pi / 2)
-             for i in range(100)]
-    alpha1 = [random.uniform(0, 2 * math.pi) for i in range(100)]
-    delta1 = [random.uniform(-math.pi / 2, math.pi / 2)
-              for i in range(100)]
-
-    s = [slalib.sla_dsep(alpha[i], delta[i], alpha1[i], delta1[i])
-         for i in range(100)]
-
-    pos1 = [AngularPosition() for i in range(100)]
-    pos2 = [AngularPosition() for i in range(100)]
-
-    for i in range(100):
-        pos1[i].alpha.r = alpha[i]
-        pos1[i].delta.r = delta[i]
-        pos2[i].alpha.r = alpha1[i]
-        pos2[i].delta.r = delta1[i]
-
-    s1 = [pos1[i].sep(pos2[i]) for i in range(100)]
-    d = [i - j for i, j in zip(s, s1)]
-    assert abs(min(d)) <= 1e-8
-    assert abs(max(d)) <= 1e-8
-
-    # Test AngularPosition.bear() with SLALIB sla_dbear.
-    s = [slalib.sla_dbear(alpha[i], delta[i], alpha1[i], delta1[i])
-    for i in range(100)]
-    s1 = [pos1[i].bear(pos2[i]) for i in range(100)]
-    d = [i - j for i, j in zip(s, s1)]
-    assert abs(min(d)) <= 1e-8
-    assert abs(max(d)) <= 1e-8
-
-
-if __name__ == "__main__":
-    # AssertionError will be raised if tests fail. Some message will be
-    # printed if PySLALIB is not present.
-    _test_with_slalib()
-    print("Tests ran succesfully.")

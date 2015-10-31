@@ -995,6 +995,176 @@ def bear(a1, b1, a2, b2):
         return x
 
 
+class HMS(object):
+    def __init__(self, angle):
+        self.angle = angle
+        self.s1 = 'HH '
+        self.s2 = 'MM '
+        self.s3 = 'SS'
+
+    def __gethms(self):
+        a = self.angle
+        lower = r2h(a._lower) if a._lower is not None else None
+        upper = r2h(a._upper) if a._upper is not None else None
+        return deci2sexa(
+            a.h, pre=a.pre, trunc=a.trunc, lower=lower, upper=upper,
+            upper_trim=a._upper_trim)
+
+    def __sethms(self, val):
+        if len(val) != 4:
+            raise ValueError(
+                "HMS must be of the form [sign, HH, MM, SS.ss..]")
+        if val[0] not in (-1, 1):
+            raise ValueError("Sign has to be -1 or 1.")
+
+        self.angle.h = sexa2deci(*val)
+
+    hms = property(__gethms, __sethms, doc="HMS tuple.")
+
+    def __getsign(self):
+        return self.hms[0]
+
+    def __setsign(self, sign):
+        if sign not in (-1, 1):
+            raise ValueError("Sign has to be -1 or 1.")
+        self.angle.h *= sign
+
+    sign = property(__getsign, __setsign, doc="Sign of HMS angle.")
+
+    def __gethh(self):
+        return self.hms[1]
+
+    def __sethh(self, val):
+        if not isinstance(val, int):
+            raise ValueError("HH takes only integers.")
+        x = self.hms
+        self.angle.h = sexa2deci(x[0], val, x[2], x[3])
+
+    hh = property(__gethh, __sethh, doc="HH of HMS angle.")
+
+    def __getmm(self):
+        return self.hms[2]
+
+    def __setmm(self, val):
+        if not isinstance(val, int):
+            raise ValueError("MM takes integers only.")
+        x = self.hms
+        self.angle.h = sexa2deci(x[0], x[1], val, x[3])
+
+    mm = property(__getmm, __setmm, doc="MM of HMS angle.")
+
+    def __getss(self):
+        return self.hms[3]
+
+    def __setss(self, val):
+        x = self.hms
+        self.angle.h = sexa2deci(x[0], x[1], x[2], val)
+
+    ss = property(__getss, __setss, doc="SS of HMS angle.")
+
+    def __str__(self):
+        a = self.angle
+        lower = r2h(a._lower) if a._lower is not None else None
+        upper = r2h(a._upper) if a._upper is not None else None
+        return fmt_angle(
+            a.h, s1=self.s1, s2=self.s2, s3=self.s3, pre=a.pre, trunc=a.trunc,
+            lower=lower, upper=upper, upper_trim=a._upper_trim)
+
+
+class HMSDescriptor(object):
+
+    def __get__(self, obj, objtype=None):
+        return HMS(obj)
+
+    def __set__(self, obj, value):
+        HMS(obj).hms = value
+
+
+class DMS(object):
+    def __init__(self, angle):
+        self.angle = angle
+        self.s1 = 'DD '
+        self.s2 = 'MM '
+        self.s3 = 'SS'
+
+    def __getdms(self):
+        a = self.angle
+        lower = r2d(a._lower) if a._lower is not None else None
+        upper = r2d(a._upper) if a._upper is not None else None
+        return deci2sexa(
+            a.d, pre=a.pre, trunc=a.trunc, lower=lower, upper=upper,
+            upper_trim=a._upper_trim)
+
+    def __setdms(self, val):
+        if len(val) != 4:
+            raise ValueError(
+                "DMS must be of the form [sign, DD, MM, SS.ss..]")
+        if val[0] not in (-1, 1):
+            raise ValueError("Sign has to be -1 or 1.")
+
+        self.angle.d = sexa2deci(*val)
+
+    dms = property(__getdms, __setdms, doc="DMS tuple.")
+
+    def __getsign(self):
+        return self.dms[0]
+
+    def __setsign(self, sign):
+        if sign not in (-1, 1):
+            raise ValueError("Sign has to be -1 or 1")
+        self.angle.d *= sign
+
+    sign = property(__getsign, __setsign, doc="Sign of DMS angle.")
+
+    def __getdd(self):
+        return self.dms[1]
+
+    def __setdd(self, val):
+        if not isinstance(val, int):
+            raise ValueError("DD takes only integers.")
+        x = self.dms
+        self.angle.d = sexa2deci(x[0], val, x[2], x[3])
+
+    dd = property(__getdd, __setdd, doc="DD of DMS angle.")
+
+    def __getmm(self):
+        return self.dms[2]
+
+    def __setmm(self, val):
+        if not isinstance(val, int):
+            raise ValueError("MM takes only integers.")
+        x = self.dms
+        self.angle.d = sexa2deci(x[0], x[1], val, x[3])
+
+    mm = property(__getmm, __setmm, doc="MM of DMS angle.")
+
+    def __getss(self):
+        return self.dms[3]
+
+    def __setss(self, val):
+        x = self.dms
+        self.angle.d = sexa2deci(x[0], x[1], x[2], val)
+
+    ss = property(__getss, __setss, doc="SS of DMS angle.")
+
+    def __str__(self):
+        a = self.angle
+        lower = r2d(a._lower) if a._lower is not None else None
+        upper = r2d(a._upper) if a._upper is not None else None
+        return fmt_angle(
+            a.d, s1=self.s1, s2=self.s2, s3=self.s3, pre=a.pre, trunc=a.trunc,
+            lower=lower, upper=upper, upper_trim=a._upper_trim)
+
+
+class DMSDescriptor(object):
+
+    def __get__(self, obj, objtype=None):
+        return DMS(obj)
+
+    def __set__(self, obj, value):
+        DMS(obj).dms = value
+
+
 class Angle(object):
     """A class for representing angles, including string formatting.
 
@@ -1153,6 +1323,9 @@ class Angle(object):
     _raw = 0.0  # angle in radians
     _iunit = 0
     _ounit = "radians"
+    _upper_trim = False
+    _lower = None
+    _upper = None
     pre = 3
     trunc = False
     s1 = " "
@@ -1251,6 +1424,10 @@ class Angle(object):
         self._ounit = val
 
     ounit = property(__getounit, __setounit, doc="String output unit.")
+
+    hms = HMSDescriptor()
+
+    dms = DMSDescriptor()
 
     def __repr__(self):
         return str(self.r)
@@ -1414,6 +1591,10 @@ class AlphaAngle(Angle):
     25.0
 
     """
+    _upper_trim = True
+    _lower = 0
+    _upper = h2r(24)
+
     def __init__(self, sg=None, **kwargs):
         super(AlphaAngle, self).__init__(sg, **kwargs)
         self.__ounit = "hours"
@@ -1431,67 +1612,12 @@ class AlphaAngle(Angle):
     ounit = property(fget=__getounit,
                      doc="Formatting unit: always hours for RA.")
 
-    def __gethms(self):
-        return deci2sexa(self.h, pre=self.pre, trunc=self.trunc,
-                         lower=0, upper=24, upper_trim=True)
-
-    def __sethms(self, val):
-        if len(val) != 4:
-            raise ValueError(
-                "HMS must be of the form [sign, HH, MM, SS.ss..]")
-        if val[0] not in (-1, 1):
-            raise ValueError("Sign has to be -1 or 1.")
-
-        self.h = sexa2deci(*val)
-
-    hms = property(__gethms, __sethms, doc="HMS tuple.")
-
-    def __getsign(self):
-        return self.hms[0]
-
-    def __setsign(self, sign):
-        if sign not in (-1, 1):
-            raise ValueError("Sign has to be -1 or 1.")
-        self.h *= sign
-
-    sign = property(__getsign, __setsign, doc="Sign of HMS angle.")
-
-    def __gethh(self):
-        return self.hms[1]
-
-    def __sethh(self, val):
-        if not isinstance(val, int):
-            raise ValueError("HH takes only integers.")
-        x = self.hms
-        self.h = sexa2deci(x[0], val, x[2], x[3])
-
-    hh = property(__gethh, __sethh, doc="HH of HMS angle.")
-
-    def __getmm(self):
-        return self.hms[2]
-
-    def __setmm(self, val):
-        if not isinstance(val, int):
-            raise ValueError("MM takes integers only.")
-        x = self.hms
-        self.h = sexa2deci(x[0], x[1], val, x[3])
-
-    mm = property(__getmm, __setmm, doc="MM of HMS angle.")
-
-    def __getss(self):
-        return self.hms[3]
-
-    def __setss(self, val):
-        x = self.hms
-        self.h = sexa2deci(x[0], x[1], x[2], val)
-
-    ss = property(__getss, __setss, doc="SS of HMS angle.")
-
     def __str__(self):
-        # Always HMS.
+        # Always HMS. Need lower, upper so that upper_trim works.
         return fmt_angle(self.h, s1=self.s1, s2=self.s2, s3=self.s3,
                          pre=self.pre, trunc=self.trunc,
-                         lower=0, upper=24, upper_trim=True)
+                         lower=r2h(self._lower), upper=r2h(self._upper),
+                         upper_trim=self._upper_trim)
 
     def __add__(self, other):
         """Adds any type of angle to this."""
@@ -1648,8 +1774,12 @@ class DeltaAngle(Angle):
     -01DD 00MM 00.000SS
 
     """
+    _upper_trim = False
+    _lower = -math.pi / 2
+    _upper = math.pi / 2
+
     def __init__(self, sg=None, **kwargs):
-        Angle.__init__(self, sg, **kwargs)
+        super(DeltaAngle, self).__init__(sg, **kwargs)
         self.__ounit = "degrees"
         self.s1 = "DD "
         self.s2 = "MM "
@@ -1657,7 +1787,7 @@ class DeltaAngle(Angle):
 
     def _setnorm(self, val):
         # overriding the method in Angle.
-        self._raw = normalize(val, lower=-90, upper=90, b=True)
+        self._raw = normalize(val, lower=self._lower, upper=self._upper, b=True)
 
     def __getounit(self):
         return self.__ounit
@@ -1665,72 +1795,17 @@ class DeltaAngle(Angle):
     ounit = property(fget=__getounit,
                      doc="Formatting unit: always degrees for Dec.")
 
-    def __getdms(self):
-        return deci2sexa(self.d, pre=self.pre, trunc=self.trunc)
-
-    def __setdms(self, val):
-        if len(val) != 4:
-            raise ValueError(
-                "DMS must be of the form [sign, DD, MM, SS.ss..]")
-        if val[0] not in (-1, 1):
-            raise ValueError("Sign has to be -1 or 1.")
-
-        self.d = sexa2deci(*val)
-
-    dms = property(__getdms, doc="DMS tuple.")
-
-    def __getsign(self):
-        return self.dms[0]
-
-    def __setsign(self, sign):
-        if sign not in (-1, 1):
-            raise ValueError("Sign has to be -1 or 1")
-        self.d *= sign
-
-    sign = property(__getsign, __setsign, doc="Sign of DMS angle.")
-
-    def __getdd(self):
-        return self.dms[1]
-
-    def __setdd(self, val):
-        if not isinstance(val, int):
-            raise ValueError("DD takes only integers.")
-        x = self.dms
-        self.d = sexa2deci(x[0], val, x[2], x[3])
-
-    dd = property(__getdd, __setdd, doc="DD of DMS angle.")
-
-    def __getmm(self):
-        return self.dms[2]
-
-    def __setmm(self, val):
-        if not isinstance(val, int):
-            raise ValueError("MM takes only integers.")
-        x = self.dms
-        self.d = sexa2deci(x[0], x[1], val, x[3])
-
-    mm = property(__getmm, __setmm, doc="MM of DMS angle.")
-
-    def __getss(self):
-        return self.dms[3]
-
-    def __setss(self, val):
-        x = self.dms
-        self.d = sexa2deci(x[0], x[1], x[2], val)
-
-    ss = property(__getss, __setss, doc="SS of DMS angle.")
-
     def __unicode__(self):
         # Always DMS.
         return fmt_angle(self.d, s1=self.s1, s2=self.s2, s3=self.s3,
                          pre=self.pre, trunc=self.trunc,
-                         lower=-90, upper=90, b=True)
+                         lower=r2d(self._lower), upper=r2d(self._upper), b=True)
 
     def __str__(self):
         # Always DMS.
         return fmt_angle(self.d, s1=self.s1, s2=self.s2, s3=self.s3,
                          pre=self.pre, trunc=self.trunc,
-                         lower=-90, upper=90, b=True)
+                         lower=r2d(self._lower), upper=r2d(self._upper), b=True)
 
     def __add__(self, other):
         """Adds any type of angle to this."""

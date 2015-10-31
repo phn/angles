@@ -878,10 +878,8 @@ def sep(a1, b1, a2, b2):
     # Tolerance to decide if the calculated separation is zero.
     tol = 1e-15
 
-    v = CartesianVector()
-    v.from_s(1.0, a1, b1)
-    v2 = CartesianVector()
-    v2.from_s(1.0, a2, b2)
+    v = CartesianVector.from_spherical(1.0, a1, b1)
+    v2 = CartesianVector.from_spherical(1.0, a2, b2)
     d = v.dot(v2)
     c = v.cross(v2).mod
 
@@ -958,14 +956,11 @@ def bear(a1, b1, a2, b2):
     # the calculated bearing is zero.
     tol = 1e-15
 
-    v1 = CartesianVector()
-    v1.from_s(1.0, a1, b1)
-    v2 = CartesianVector()
-    v2.from_s(1.0, a2, b2)
+    v1 = CartesianVector.from_spherical(1.0, a1, b1)
+    v2 = CartesianVector.from_spherical(1.0, a2, b2)
 
     # Z-axis
-    v0 = CartesianVector()
-    v0.from_s(r=1.0, alpha=0.0, delta=d2r(90.0))
+    v0 = CartesianVector.from_spherical(r=1.0, alpha=0.0, delta=d2r(90.0))
 
     if abs(v1.cross(v0).mod) < tol:
         # The first point is on the pole. Bearing is undefined.
@@ -1827,6 +1822,9 @@ class CartesianVector(object):
     vector methods can be used for calculating bearings and
     separations.
 
+    The latitude like angle is measured from the "equator" and not from
+    the z-axis.
+
     Methods
     -------
     dot
@@ -1839,6 +1837,17 @@ class CartesianVector(object):
         self.x = x
         self.y = y
         self.z = z
+
+    @classmethod
+    def from_spherical(cls, r=1.0, alpha=0.0, delta=0.0):
+        """Construct Cartesian vector from spherical coordinates.
+
+        alpha and delta must be in radians.
+        """
+        x = r * math.cos(delta) * math.cos(alpha)
+        y = r * math.cos(delta) * math.sin(alpha)
+        z = r * math.sin(delta)
+        return cls(x=x, y=y, z=z)
 
     def dot(self, v):
         return self.x * v.x + self.y * v.y + self.z * v.z
@@ -1869,20 +1878,19 @@ class CartesianVector(object):
         """Modulus of vector."""
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 
-    def from_s(self, r=1.0, alpha=0.0, delta=0.0):
-        """Construct Cartesian vector from spherical coordinates.
-
-        alpha and delta must be in radians.
-        """
-        self.x = r * math.cos(delta) * math.cos(alpha)
-        self.y = r * math.cos(delta) * math.sin(alpha)
-        self.z = r * math.sin(delta)
+    @property
+    def spherical_coords(self):
+        tol = 1e-15
+        r = self.mod
+        alpha = math.atan2(self.y, self.x)
+        delta = math.pi/2.0 if r < tol else math.asin(self.z/r)
+        return (r, alpha, delta)
 
     def __repr__(self):
-        return str(self.x, self.y, self.z)
+        return "CartesianVector(x={}, y={}, z={})".format(self.x, self.y, self.z)
 
     def __str__(self):
-        self.___repr__()
+        return self.__repr__()
 
 
 class AngularPosition(object):

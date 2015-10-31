@@ -1,9 +1,10 @@
+import math
+import pytest
 from angles import (
     d2r, h2d, d2h, r2h, h2r, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
     normalize, deci2sexa, sexa2deci, fmt_angle, phmsdms, pposition, sep, bear,
-    Angle, AlphaAngle, DeltaAngle
+    Angle, AlphaAngle, DeltaAngle, CartesianVector
 )
-import pytest
 
 
 def test_normalize_proper_input_range():
@@ -681,3 +682,26 @@ def test_delta_angle():
     assert round(a.d, 12) == 45.678
     a.dms.dms == (1, 45, 40, 40.80)
     a.hms.hms == (1, 45/15.0, 40/60.0/15.0, 40.80/3600.0/15.0)
+
+
+def test_cartesian_vector():
+    v = CartesianVector()
+    assert v.x == 0.0
+    assert v.y == 0.0
+    assert v.z == 0.0
+
+    v = CartesianVector(x=10, y=10, z=10)
+    assert v.mod == math.sqrt(3 * 10**2)
+    assert v.spherical_coords == (v.mod, math.atan2(10, 10), math.asin(10/v.mod))
+
+    a = math.atan2(10, 10)
+    d = math.asin(10/v.mod)
+    v = CartesianVector.from_spherical(r=1.0, alpha=a, delta=d)
+    assert v.mod == 1.0
+    assert round(v.x, 15) == round(math.cos(d)*math.sin(a), 15)
+    assert round(v.y, 15) == round(math.cos(d)*math.cos(a), 15)
+    assert round(v.z, 15) == round(math.sin(d), 15)
+    r1, a1, d1 = v.spherical_coords
+    assert r1 == 1.0
+    assert round(a1, 15) == round(a, 15)
+    assert round(d1, 15) == round(d, 15)

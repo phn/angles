@@ -1,5 +1,7 @@
 from angles import (
-    normalize, deci2sexa, sexa2deci, fmt_angle, phmsdms, pposition, sep, bear
+    r2d, d2r, h2d, d2h, r2h, h2r, r2arcs, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
+    normalize, deci2sexa, sexa2deci, fmt_angle, phmsdms, pposition, sep, bear,
+    Angle
 )
 import pytest
 
@@ -484,3 +486,71 @@ def test_bear_against_slalib_dbear():
 
     assert abs(min(d)) <= 1e-8
     assert abs(max(d)) <= 1e-8
+
+
+def test_angle_class_must_initialize_properly():
+    a = Angle(sg="12h14m13.567s")
+    val = 12 + 14/60.0 + 13.567 / 3600.0
+    assert a.h == val
+    assert a.r == h2r(val)
+    assert a.d == h2d(val)
+    assert a.arcs == h2arcs(val)
+
+    # ignore r
+    with pytest.warns(UserWarning):
+        Angle(sg="12h14m13.567s", r=10)
+
+    a = Angle(sg="12h14m13.567s", r=10)
+    assert a.r == h2r(val)
+
+    # ignore h and mm
+    with pytest.warns(UserWarning):
+        a = Angle(r=10, h=20, mm=1)
+
+    a = Angle(r=10, h=20, mm=1)
+    assert a.r == 10
+    assert a.h == r2h(10)
+
+
+def test_angle_class_must_handle_assignments():
+    a = Angle(d=10.5)
+    a.r = d2r(45.0)
+
+    v = 45.0
+    assert a.r == d2r(v)
+    assert a.h == d2h(v)
+    assert a.arcs == d2arcs(v)
+    assert a.ounit == 'degrees'
+
+    v = 46.0
+    # assignment
+    a.r = d2r(v)
+    assert a.r == d2r(v)
+    assert a.h == d2h(v)
+    assert a.d == v
+    assert a.arcs == d2arcs(v)
+    assert a.ounit == 'degrees'  # no change
+
+    v = 49.0
+    a.d = v
+    assert a.r == d2r(v)
+    assert a.h == d2h(v)
+    assert a.d == v
+    assert a.arcs == d2arcs(v)
+    assert a.ounit == 'degrees'  # no change
+
+    v = 10
+    a.h = v
+    assert a.r == h2r(v)
+    assert a.h == v
+    assert a.d == h2d(v)
+    assert a.arcs == h2arcs(v)
+    assert a.ounit == 'degrees'  # no change
+
+    v = 3600.0
+    a.arcs = v
+    assert a.r == arcs2r(v)
+    assert a.h == arcs2h(v)
+    assert a.d == arcs2d(v)
+    assert a.arcs == v
+    assert a.ounit == 'degrees'  # no change

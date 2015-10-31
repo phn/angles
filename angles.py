@@ -1210,6 +1210,7 @@ class Angle(object):
         return self._getnorm()
 
     def __setr(self, val):
+        self._iunit = 0
         self._setnorm(val)
 
     r = property(__getr, __setr, doc="Angle in radians.")
@@ -1218,6 +1219,7 @@ class Angle(object):
         return r2d(self._getnorm())
 
     def __setd(self, val):
+        self._iunit = 1
         self._setnorm(d2r(val))
 
     d = property(__getd, __setd, doc="Angle in degrees.")
@@ -1226,6 +1228,7 @@ class Angle(object):
         return r2h(self._getnorm())
 
     def __seth(self, val):
+        self._iunit = 2
         self._setnorm(h2r(val))
 
     h = property(__geth, __seth, doc="Angle in hours.")
@@ -1234,6 +1237,7 @@ class Angle(object):
         return r2arcs(self._getnorm())
 
     def __setarcs(self, val):
+        self._iunit = 1
         self._setnorm(arcs2r(val))
 
     arcs = property(__getarcs, __setarcs, doc="Angle in arcseconds.")
@@ -1689,7 +1693,7 @@ class DeltaAngle(Angle):
         return self.dms[1]
 
     def __setdd(self, val):
-        if type(val) != type(1):
+        if not isinstance(val, int):
             raise ValueError("DD takes only integers.")
         x = self.dms
         self.d = sexa2deci(x[0], val, x[2], x[3])
@@ -1700,7 +1704,7 @@ class DeltaAngle(Angle):
         return self.dms[2]
 
     def __setmm(self, val):
-        if type(val) != type(1):
+        if not isinstance(val, int):
             raise ValueError("MM takes only integers.")
         x = self.dms
         self.d = sexa2deci(x[0], x[1], val, x[3])

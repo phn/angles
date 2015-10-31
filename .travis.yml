@@ -5,5 +5,5 @@ python:
     - "3.4"
     - "3.5"
 install:
-    - "pip install -U pytest>=2.8"
+    - "pip install pytest>=2.8"
 script: py.test test_angles.py

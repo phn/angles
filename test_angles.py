@@ -1,7 +1,7 @@
 from angles import (
     r2d, d2r, h2d, d2h, r2h, h2r, r2arcs, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
     normalize, deci2sexa, sexa2deci, fmt_angle, phmsdms, pposition, sep, bear,
-    Angle
+    Angle, AlphaAngle, DeltaAngle
 )
 import pytest
 
@@ -492,6 +492,7 @@ def test_angle_class_must_initialize_properly():
     a = Angle(sg="12h14m13.567s")
     val = 12 + 14/60.0 + 13.567 / 3600.0
     assert a.h == val
+    assert a.ounit == 'hours'
     assert a.r == h2r(val)
     assert a.d == h2d(val)
     assert a.arcs == h2arcs(val)
@@ -502,6 +503,7 @@ def test_angle_class_must_initialize_properly():
 
     a = Angle(sg="12h14m13.567s", r=10)
     assert a.r == h2r(val)
+    assert a.ounit == 'hours'
 
     # ignore h and mm
     with pytest.warns(UserWarning):
@@ -509,6 +511,7 @@ def test_angle_class_must_initialize_properly():
 
     a = Angle(r=10, h=20, mm=1)
     assert a.r == 10
+    assert a.ounit == 'radians'
     assert a.h == r2h(10)
 
 
@@ -554,3 +557,127 @@ def test_angle_class_must_handle_assignments():
     assert a.d == arcs2d(v)
     assert a.arcs == v
     assert a.ounit == 'degrees'  # no change
+
+
+def test_angle_class_getting_hms_property_must_work():
+    a = Angle(d=45.0)
+
+    assert a.hms.sign == 1
+    assert a.hms.hh == 3.0
+    assert a.hms.mm == 0.0
+    assert a.hms.ss == 0.0
+    assert a.hms.hms == (1, 3, 0.0, 0.0)
+    assert str(a.hms) == ("+03HH 00MM 00.000SS")
+
+    a = Angle(sg="-12h14m13.567s")
+
+    assert a.hms.sign == -1
+    assert a.hms.hh == 12
+    assert a.hms.mm == 14
+    assert a.hms.ss == 13.567
+    assert a.hms.hms == (-1, 12, 14, 13.567)
+    assert str(a.hms) == "-12HH 14MM 13.567SS"
+
+
+def test_angle_class_setting_hms_property_must_work():
+    a = Angle(d=0.0)
+
+    a.hms = (1, 12, 14, 13.567)
+    v = 12 + 14/60.0 + 13.567/3600.0
+    assert a.h == v
+    assert a.hms.sign == 1
+    assert a.hms.hh == 12
+    assert a.hms.mm == 14
+    assert a.hms.ss == 13.567
+    assert str(a.hms) == "+12HH 14MM 13.567SS"
+
+    a.hms.hh = 15
+    assert a.h == 15 + 14/60.0 + 13.567/3600.0
+
+    a.hms.mm = 15
+    assert a.h == 15 + 15/60.0 + 13.567/3600.0
+
+    a = Angle(d=0.0)
+    a.hms.mm = 12
+    assert round(a.h, 15) == 12/60.0
+
+
+def test_angle_class_getting_dms_property_must_work():
+    a = Angle(d=45.0)
+
+    assert a.dms.sign == 1
+    assert a.dms.dd == 45.0
+    assert a.dms.mm == 0.0
+    assert a.dms.ss == 0.0
+    assert a.dms.dms == (1, 45, 0.0, 0.0)
+    assert str(a.dms) == ("+45DD 00MM 00.000SS")
+
+    a = Angle(sg="-12h14m13.567s")
+
+    assert a.dms.sign == -1
+    assert a.dms.dd == 183
+    assert a.dms.mm == 33
+    assert a.dms.ss == 23.505
+    assert a.dms.dms == (-1, 183, 33, 23.505)
+    assert str(a.dms) == "-183DD 33MM 23.505SS"
+
+
+def test_angle_class_setting_dms_property_must_work():
+    a = Angle(d=0.0)
+
+    a.dms = (-1, 183, 33, 23.505)
+    v = -1 * (183 + 33/60.0 + 23.505/3600.0)
+    assert a.d == v
+    assert a.dms.sign == -1
+    assert a.dms.dd == 183
+    assert a.dms.mm == 33
+    assert a.dms.ss == 23.505
+    assert str(a.dms) == "-183DD 33MM 23.505SS"
+
+    a.dms.dd = 101
+    assert a.d == -101.55652916666668
+
+    a.dms.mm = 15
+    assert a.d == -101.25652916666667
+
+    a = Angle(d=0.0)
+    a.dms.mm = 12
+    assert round(a.d, 15) == 12/60.0
+
+
+def test_angle_class_hms_and_dms_must_be_consistent():
+    a = Angle(d=1)
+
+    a.dms = (1, 1, 0, 0)
+    assert a.hms.hms == (1, 0, 4, 0.0)
+
+    a.hms = (1, 1, 0, 0)
+    assert a.dms.dms == (1, 15, 0, 0.0)
+
+
+def test_alpha_angle():
+    a = AlphaAngle(h=-12)
+    assert a.h == 12
+    assert a.ounit == "hours"
+    with pytest.raises(AttributeError):
+        a.ounit = "degrees"
+
+    a = AlphaAngle(h=12.527)
+
+    assert round(a.h, 14) == 12.527
+    a.hms.hms == (1, 12, 31, 37.2)
+    a.dms.dms == (1, 12/15.0, 31/60.0/15.0, 37.2/3600.0/15.0)
+
+
+def test_delta_angle():
+    a = DeltaAngle(d=-91)
+    assert a.d == -89
+    assert a.ounit == "degrees"
+    with pytest.raises(AttributeError):
+        a.ounit = "hours"
+
+    a = DeltaAngle(d=45.678)
+
+    assert round(a.d, 12) == 45.678
+    a.dms.dms == (1, 45, 40, 40.80)
+    a.hms.hms == (1, 45/15.0, 40/60.0/15.0, 40.80/3600.0/15.0)

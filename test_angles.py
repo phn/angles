@@ -1,5 +1,5 @@
 from angles import (
-    r2d, d2r, h2d, d2h, r2h, h2r, r2arcs, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
+    d2r, h2d, d2h, r2h, h2r, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
     normalize, deci2sexa, sexa2deci, fmt_angle, phmsdms, pposition, sep, bear,
     Angle, AlphaAngle, DeltaAngle
 )

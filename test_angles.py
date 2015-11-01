@@ -3,7 +3,8 @@ import pytest
 from angles import (
     r2d, d2r, h2d, d2h, r2h, h2r, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
     normalize, deci2sexa, sexa2deci, fmt_angle, phmsdms, pposition, sep, bear,
-    Angle, AlphaAngle, DeltaAngle, CartesianVector, normalize_sphere
+    Angle, AlphaAngle, DeltaAngle, CartesianVector, normalize_sphere,
+    AngularPosition
 )
 
 
@@ -785,3 +786,49 @@ def test_normalize_sphere():
     x = normalize_sphere(-375, -45)
     r = (345, -45)
     assert (round(x[0], 12), round(x[1], 12)) == r
+
+
+def test_angular_position():
+    # should get converted to (345, -89)
+    ap = AngularPosition(alpha=165, delta=-91)
+    assert round(ap.alpha.d, 12) == 345
+    assert round(ap.delta.d, 12) == -89
+
+    # changing delta to -91 again should switch alpha back to 165
+    ap.delta.d = -91
+    assert round(ap.alpha.d, 12) == 165
+    assert round(ap.delta.d, 12) == -89
+
+    # changing to 89 shouldn't change alpha
+    ap.delta.d = 89
+    assert round(ap.alpha.d, 12) == 165
+    assert round(ap.delta.d, 12) == 89
+
+    # changing alpha shouldn't change delta
+    ap.alpha.d = -180
+    assert round(ap.alpha.d, 12) == 180
+    assert round(ap.delta.d, 12) == 89
+
+
+def test_angular_position_from_hd():
+    a = AngularPosition.from_hd("19 16 35.57 +30 11 00.5")
+    assert round(a.alpha.h, 12) == round(19 + 16/60.0 + 35.57/3600.0, 12)
+    assert round(a.delta.d, 12) == round(30 + 11/60.0 + 0.5/3600.0, 12)
+
+    a = AngularPosition.from_hd("19d 16 35.57 +30 11 00.5")
+    assert round(a.alpha.d, 12) == round(19 + 16/60.0 + 35.57/3600.0, 12)
+    assert round(a.delta.d, 12) == round(30 + 11/60.0 + 0.5/3600.0, 12)
+
+
+def test_angular_position_sep():
+    a = AngularPosition(45.0, 45.0)
+    b = AngularPosition(45.0, -45.0)
+
+    assert round(a.sep(b), 12) == round(d2r(90), 12)
+
+
+def test_angular_position_bear():
+    a = AngularPosition(45.0, 45.0)
+    b = AngularPosition(45.0, -45.0)
+
+    assert round(a.bear(b), 12) == round(d2r(180), 12)

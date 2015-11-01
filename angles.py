@@ -1937,6 +1937,38 @@ def normalize_sphere(alpha, delta):
     return r2d(angles[0]), r2d(angles[1])
 
 
+class AlphaAngleSphere(AlphaAngle):
+    def __init__(self, ap):
+        self._ap = ap
+        super(AlphaAngleSphere, self).__init__(h=r2h(ap._cv.normalized_angles[0]))
+
+    def _getnorm(self):
+        # When DeltaAngleSphere is changed it makes the change in _cv. We need
+        # to get that change
+        return self._ap._cv.normalized_angles[0]
+
+    def _setnorm(self, val):
+        _, delta = self._ap._cv.normalized_angles
+        self._ap._cv = CartesianVector.from_spherical(r=self._ap._cv.mod, alpha=val, delta=delta)
+        # don't really need this step since _getnorm above
+        self._raw = self._ap._cv.normalized_angles[0]
+
+
+class DeltaAngleSphere(DeltaAngle):
+    def __init__(self, ap):
+        self._ap = ap
+        super(DeltaAngleSphere, self).__init__(d=r2d(ap._cv.normalized_angles[1]))
+
+    def _getnorm(self):
+        return self._ap._cv.normalized_angles[1]
+
+    def _setnorm(self, val):
+        alpha, _ = self._ap._cv.normalized_angles
+        self._ap._cv = CartesianVector.from_spherical(r=self._ap._cv.mod, alpha=alpha, delta=val)
+        # don't really need this step since _getnorm above
+        self._raw = self._ap._cv.normalized_angles[1]
+
+
 class AngularPosition(object):
     """Class for representing a point on a unit sphere, say (RA, DEC).
 
@@ -1959,34 +1991,14 @@ class AngularPosition(object):
 
     Parameters
     ----------
-    hd: str
-      The string is interpreted as contianing 2 sxagesimal numbers. The
-      first number is taken to be in the HMS format, and the second is
-      taken to be in the DMS format.
-
-      For example "12 22 54.899 +15 49 20.57" is interpreted as a
-      position with alpha angle equal to 12hh 22mm and 54.899ss, and a
-      delta angle +15dd 49mm 20.57ss.
-
-      If ``hd`` is given as input, all other parameters are ignored.
-
-    alpha : float, str
-        The longitudinal angle. If value is a float then it is taken to
-        be the angle in hours. If value is str then it is treated as a
-        sexagesimal number and the units are determined from
-        it. Default is 0.0.
-
-    delta : float, str
-        The latitudinal angle. If value is a float then it is taken to be
-        the angle in degrees. If value is str then it is treated as a
-        sexagesimal number and the units are determined from
-        it. Default is 0.0.
+    alpha: longitude/ra like angle in degrees
+    delta: latitude like angle in degrees
 
     Attributes
     ----------
-    alpha : AlphaAngle
+    alpha : AlphaAngleSphere
         The longitudinal angle.
-    delta : DeltaAngle
+    delta : DeltaAngleSphere
         The lattudinal angle.
     dlim : str
         Delimiter to use between `alpha` and `delta` angles in string
@@ -2047,77 +2059,52 @@ class AngularPosition(object):
     +00HH 00MM 00.000SS | +90DD 00MM 00.000SS
 
     """
-    # Separator between alpha and delta when returning string
-    # representation.
     dlim = " "
 
-    def __init__(self, hd=None, alpha=0.0, delta=0.0):
-        if hd:
-            if not isinstance(hd, str):
-                raise ValueError("hd must be a string.")
+    def __init__(self, alpha=0.0, delta=0.0):
+        self._cv = CartesianVector.from_spherical(r=1.0, alpha=d2r(alpha), delta=d2r(delta))
+        self._alpha = AlphaAngleSphere(self)
+        self._delta = DeltaAngleSphere(self)
 
-            # There are several possible combination of units in the
-            # string. For simplicity, use set of rules to get alpha
-            # value in hours and delta value in degrees.
-            r = pposition(hd, details=True)
-            if r['numvals'] == 6:
-                raw_x = r['raw_x']
-                if raw_x['units'] == "degrees" and ("d" in hd or "dd" in hd):
-                    # phmsdms called by pposition returns degrees if "hh"
-                    # or "h" is not in hd. We want the reverse here.
-                    # Assume degrees only if "d" or "dd" is present in hd.
-                    x = d2h(r['x'])
-                else:
-                    # Assume that this is hours.
-                    x = r['x']
+    @classmethod
+    def from_hd(cls, hd):
+        if not isinstance(hd, str):
+            raise ValueError("hd must be a string.")
 
-                raw_y = r['raw_y']
-                if raw_y['units'] == "hours":
-                    y = h2d(r['y'])
-                else:
-                    y = r['y']  # Assume degrees.
-
-            else:
+        # There are several possible combination of units in the
+        # string. For simplicity, use set of rules to get alpha
+        # value in hours and delta value in degrees.
+        r = pposition(hd, details=True)
+        if r['numvals'] == 6:
+            raw_x = r['raw_x']
+            if raw_x['units'] == "degrees" and ("d" in hd or "dd" in hd):
+                # phmsdms called by pposition returns degrees if "hh"
+                # or "h" is not in hd. We want the reverse here.
+                # Assume degrees only if "d" or "dd" is present in hd.
                 x = r['x']
-                y = r['y']
+            else:
+                # Assume that this is hours.
+                x = h2d(r['x'])
 
-            self._alpha = AlphaAngle(h=x)
-            self._delta = DeltaAngle(d=y)
+            raw_y = r['raw_y']
+            if raw_y['units'] == "hours":
+                y = h2d(r['y'])
+            else:
+                y = r['y']  # Assume degrees.
 
         else:
-            if isinstance(alpha, str):
-                self._alpha = AlphaAngle(sg=alpha)
-            else:
-                self._alpha = AlphaAngle(h=alpha)
+            x = h2d(r['x'])
+            y = r['y']
 
-            if isinstance(delta, str):
-                self._delta = DeltaAngle(sg=delta)
-            else:
-                self._delta = DeltaAngle(d=delta)
+        return cls(alpha=x, delta=y)
 
-    def __getalpha(self):
+    @property
+    def alpha(self):
         return self._alpha
 
-    def __setalpha(self, a):
-        if not isinstance(a, AlphaAngle):
-            raise TypeError("alpha must be of type AlphaAngle.")
-        else:
-            self._alpha = a
-
-    alpha = property(fget=__getalpha, fset=__setalpha,
-                     doc="Longitudinal angle (AlphaAngle).")
-
-    def __getdelta(self):
+    @property
+    def delta(self):
         return self._delta
-
-    def __setdelta(self, a):
-        if not isinstance(a, DeltaAngle):
-            raise TypeError("delta must be of type DeltaAngle.")
-        else:
-            self._delta = a
-
-    delta = property(fget=__getdelta, fset=__setdelta,
-                     doc="Latitudinal angle (DeltaAngle).")
 
     def sep(self, p):
         """Angular spearation between objects in radians.
@@ -2161,15 +2148,4 @@ class AngularPosition(object):
         return bear(self.alpha.r, self.delta.r, p.alpha.r, p.delta.r)
 
     def __str__(self):
-        return self.dlim.join([self.alpha.__str__(),
-                               self.delta.__str__()])
-
-    def __repr__(self):
-        # Return alpha in hours and delta in degrees. Should be able to
-        # **eval(d) this to constructor and recreate this position.
-        return str(dict(alpha=self.alpha.h, delta=self.delta.d))
-
-    def __sub__(self, other):
-        if type(other) != type(self):
-            raise TypeError("Subtraction needs an AngularPosition object.")
-        return self.sep(other)
+        return "{0}{1}{2}".format(str(self.alpha), self.dlim, str(self.delta))

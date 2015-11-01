@@ -1900,6 +1900,43 @@ class CartesianVector(object):
         return self.__repr__()
 
 
+def normalize_sphere(alpha, delta):
+    """Normalize angles of a point on a sphere.
+
+    Parameters
+    ----------
+    alpha: float
+        The alpha (right ascension/longitude like) angle in degrees.
+    delta: float
+        The delta (declination/latitude like) angle in degrees.
+
+    Returns
+    -------
+    (alpha, delta): (float, float)
+        Normalized alpha (degrees) and delta (degrees).
+
+    Notes
+    -----
+
+    This function converts given position on a sphere into the simplest
+    normalized values, considering that the points are on a sphere.
+
+    Input position        Output position
+
+    (180, 91)              (0, 89)
+    (180, -91)             (0, -89)
+    (0, 91)                (180, 89)
+    (0, -91)               (180, -89)
+    (120, 280)             (120, -80)
+
+    (h2d(25), 45)          (225, 45)
+    (h2d(-25), -45)        (345, -45)
+    """
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(alpha), delta=d2r(delta))
+    angles = v.normalized_angles
+    return r2d(angles[0]), r2d(angles[1])
+
+
 class AngularPosition(object):
     """Class for representing a point on a unit sphere, say (RA, DEC).
 

@@ -1,7 +1,7 @@
 import math
 import pytest
 from angles import (
-    d2r, h2d, d2h, r2h, h2r, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
+    r2d, d2r, h2d, d2h, r2h, h2r, arcs2r, arcs2h, h2arcs, d2arcs, arcs2d,
     normalize, deci2sexa, sexa2deci, fmt_angle, phmsdms, pposition, sep, bear,
     Angle, AlphaAngle, DeltaAngle, CartesianVector
 )
@@ -705,3 +705,53 @@ def test_cartesian_vector():
     assert r1 == 1.0
     assert round(a1, 15) == round(a, 15)
     assert round(d1, 15) == round(d, 15)
+
+
+def test_cartesian_vector_normalize_sphere():
+    a = (180, 91)
+    r = (0, 89)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r
+
+    a = (180, -91)
+    r = (0, -89)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r
+
+    a = (0, 91)
+    r = (180, 89)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r
+
+    a = (0, -91)
+    r = (180, -89)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r
+
+    a = (120, 280)
+    r = (120, -80)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r
+
+    a = (375, 45)  # 25 hours, 45 degrees
+    r = (15, 45)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r
+
+    a = (-375, -45)
+    r = (345, -45)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r
+
+    a = (-375, -91)
+    r = (165, -89)
+    v = CartesianVector.from_spherical(r=1.0, alpha=d2r(a[0]), delta=d2r(a[1]))
+    x = [r2d(i) for i in v.normalized_angles]
+    assert (round(x[0], 12), round(x[1], 12)) == r

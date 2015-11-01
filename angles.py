@@ -1886,6 +1886,13 @@ class CartesianVector(object):
         delta = math.pi/2.0 if r < tol else math.asin(self.z/r)
         return (r, alpha, delta)
 
+    @property
+    def normalized_angles(self):
+        _, alpha, delta = self.spherical_coords
+        alpha = normalize(r2d(alpha), lower=0, upper=360)
+        delta = normalize(r2d(delta), lower=-90, upper=90, b=True)
+        return (d2r(alpha), d2r(delta))
+
     def __repr__(self):
         return "CartesianVector(x={}, y={}, z={})".format(self.x, self.y, self.z)
 
@@ -2007,9 +2014,9 @@ class AngularPosition(object):
     # representation.
     dlim = " "
 
-    def __init__(self, hd=None, alpha=0.0, delta=0.0, fh=True):
+    def __init__(self, hd=None, alpha=0.0, delta=0.0):
         if hd:
-            if type(hd) != type(" "):
+            if not isinstance(hd, str):
                 raise ValueError("hd must be a string.")
 
             # There are several possible combination of units in the
@@ -2041,12 +2048,12 @@ class AngularPosition(object):
             self._delta = DeltaAngle(d=y)
 
         else:
-            if type(alpha) == type(" "):
+            if isinstance(alpha, str):
                 self._alpha = AlphaAngle(sg=alpha)
             else:
                 self._alpha = AlphaAngle(h=alpha)
 
-            if type(delta) == type(" "):
+            if isinstance(delta, str):
                 self._delta = DeltaAngle(sg=delta)
             else:
                 self._delta = DeltaAngle(d=delta)

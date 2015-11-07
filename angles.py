@@ -578,56 +578,69 @@ def phmsdms(hmsdms):
 
     Examples
     --------
-    >>> phmsdms("12")
+    >>> phmsdms("12") == {
+    ... 'parts': [12.0, None, None],
+    ... 'sign': 1,
+    ... 'units': 'degrees',
+    ... 'vals': [12.0, 0.0, 0.0]
+    ... }
+    True
 
-    {'parts': [12.0, None, None],
-     'sign': 1,
-     'units': 'degrees',
-     'vals': [12.0, 0.0, 0.0]}
-    >>> phmsdms("12h")
+    >>> phmsdms("12h") == {
+    ... 'parts': [12.0, None, None],
+    ... 'sign': 1,
+    ... 'units': 'hours',
+    ... 'vals': [12.0, 0.0, 0.0]
+    ... }
+    True
 
-    {'parts': [12.0, None, None],
-     'sign': 1,
-     'units': 'hours',
-     'vals': [12.0, 0.0, 0.0]}
-    >>> phmsdms("12d13m14.56")
+    >>> phmsdms("12d13m14.56") == {
+    ... 'parts': [12.0, 13.0, 14.56],
+    ... 'sign': 1,
+    ... 'units': 'degrees',
+    ... 'vals': [12.0, 13.0, 14.56]
+    ... }
+    True
 
-    {'parts': [12.0, 13.0, 14.56],
-     'sign': 1,
-     'units': 'degrees',
-     'vals': [12.0, 13.0, 14.56]}
-    >>> phmsdms("12d13m14.56")
+    >>> phmsdms("12d13m14.56") == {
+    ... 'parts': [12.0, 13.0, 14.56],
+    ... 'sign': 1,
+    ... 'units': 'degrees',
+    ... 'vals': [12.0, 13.0, 14.56]
+    ... }
+    True
 
-    {'parts': [12.0, 13.0, 14.56],
-     'sign': 1,
-     'units': 'degrees',
-     'vals': [12.0, 13.0, 14.56]}
-    >>> phmsdms("12d14.56ss")
+    >>> phmsdms("12d14.56ss") == {
+    ... 'parts': [12.0, None, 14.56],
+    ... 'sign': 1,
+    ... 'units': 'degrees',
+    ... 'vals': [12.0, 0.0, 14.56]
+    ... }
+    True
 
-    {'parts': [12.0, None, 14.56],
-     'sign': 1,
-     'units': 'degrees',
-     'vals': [12.0, 0.0, 14.56]}
-    >>> phmsdms("14.56ss")
+    >>> phmsdms("14.56ss") == {
+    ... 'parts': [None, None, 14.56],
+    ... 'sign': 1,
+    ... 'units': 'degrees',
+    ... 'vals': [0.0, 0.0, 14.56]
+    ... }
+    True
 
-    {'parts': [None, None, 14.56],
-     'sign': 1,
-     'units': 'degrees',
-     'vals': [0.0, 0.0, 14.56]}
+    >>> phmsdms("12h13m12.4s") == {
+    ... 'parts': [12.0, 13.0, 12.4],
+    ... 'sign': 1,
+    ... 'units': 'hours',
+    ... 'vals': [12.0, 13.0, 12.4]
+    ... }
+    True
 
-    >>> phmsdms("12h13m12.4s")
-
-    {'parts': [12.0, 13.0, 12.4],
-     'sign': 1,
-     'units': 'hours',
-     'vals': [12.0, 13.0, 12.4]}
-
-    >>> phmsdms("12:13:12.4s")
-
-    {'parts': [12.0, 13.0, 12.4],
-     'sign': 1,
-     'units': 'degrees',
-     'vals': [12.0, 13.0, 12.4]}
+    >>> phmsdms("12:13:12.4s") == {
+    ... 'parts': [12.0, 13.0, 12.4],
+    ... 'sign': 1,
+    ... 'units': 'degrees',
+    ...  'vals': [12.0, 13.0, 12.4]
+    ... }
+    True
 
     But `phmsdms("12:13mm:12.4s")` will not work.
 
@@ -790,7 +803,7 @@ def pposition(hd, details=False):
     >>> from angles import pposition
     >>> ra, de = pposition("12 22 54.899 +15 49 20.57")
     >>> ra
-    12.381916388888889
+    12.38191638888889
     >>> de
     15.822380555555556
 
@@ -923,24 +936,20 @@ def bear(a1, b1, a2, b2):
 
     Examples
     --------
-    >>> angles.bear(0, 0, 0, -angles.d2r(90.0))
+    >>> from angles import bear, r2d, d2r
+    >>> bear(0, 0, 0, -d2r(90.0))
     3.141592653589793
-    >>> angles.bear(0, -angles.d2r(90.0), 0, 0)
+    >>> bear(0, -d2r(90.0), 0, 0)
     0.0
-    >>> angles.bear(0, -angles.d2r(45.0), 0, 0)
+    >>> bear(0, -d2r(45.0), 0, 0)
     0.0
-    >>> angles.bear(0, -angles.d2r(89.678), 0, 0)
+    >>> bear(0, -d2r(89.678), 0, 0)
     0.0
 
-    >>> r2d(bear(angles.d2r(45.0), angles.d2r(45.0),
-        angles.d2r(60.0), angles.d2r(45.0)))
-    84.68152816060062
-    >>> r2d(bear(angles.d2r(45.0), angles.d2r(45.0),
-        angles.d2r(46.0), angles.d2r(45.0)))
+    >>> r2d(bear(d2r(45.0), d2r(45.0), d2r(46.0), d2r(45.0)))
     89.64644212193384
 
-    >>> r2d(bear(angles.d2r(45.0), angles.d2r(45.0),
-        angles.d2r(44.0), angles.d2r(45.0)))
+    >>> r2d(bear(d2r(45.0), d2r(45.0), d2r(44.0), d2r(45.0)))
     -89.64644212193421
 
     """

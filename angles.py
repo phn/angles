@@ -1000,6 +1000,7 @@ def bear(a1, b1, a2, b2):
 
 
 class HMS(object):
+    """Class for representing angle as HMS, designed to be used with Angle."""
     def __init__(self, angle):
         self.angle = angle
         self.s1 = 'HH '
@@ -1076,7 +1077,7 @@ class HMS(object):
 
 
 class HMSDescriptor(object):
-
+    """Descriptor that returns HMS instance attached to given Angle instance."""
     def __get__(self, obj, objtype=None):
         return HMS(obj)
 
@@ -1085,6 +1086,7 @@ class HMSDescriptor(object):
 
 
 class DMS(object):
+    """Class for representing angle as DMS, designed to be used with Angle."""
     def __init__(self, angle):
         self.angle = angle
         self.s1 = 'DD '
@@ -1161,7 +1163,7 @@ class DMS(object):
 
 
 class DMSDescriptor(object):
-
+    """Descriptor that returns DMS instance attached to given Angle instance."""
     def __get__(self, obj, objtype=None):
         return DMS(obj)
 
@@ -1170,39 +1172,59 @@ class DMSDescriptor(object):
 
 
 class Angle(object):
-    """A class for representing angles, including string formatting.
+    """A class for representing an angle.
 
     This is the basic Angle object. The angle is initialized to the
     given value. Default is 0 radians. This class will accept any
     reasonably well formatted sexagesimal string representation, in
     addition to numerical values.
 
-    The value of the angle in different units are available as
-    attributes. The angle object can be converted to a sexagesimal
-    string, which can be customized using other attributes.
+    The value of the angle in different units are available as attributes. The
+    angle object can be converted to a sexagesimal string, which can be
+    customized using other attributes. The angle can be access in HMS and DMS
+    formats using appropriate attributes.
+
+    Converting to string using either str() or print will return a string
+    representation of the angle.
 
     Parameters
     ----------
+    sg : str
+        A string containing a sexagesimal number.
     r : float
         Angle in radians.
-    d : degrees
+    d : float
         Angle in degrees.
     h : float
         Angle in hours.
-    mm : float
-        The second part, i.e., minutes, of a sexagesimal number.
-    ss : float
-        The third part, i.e., seconds, of a sexagesimal number.
-    sg : str
-        A string containing a sexagesimal number.
+    arcs : float
+        Angle in arcseconds.
 
     Atttributes
     -----------
-    r
-    d
-    h
-    arcs
-    ounit
+    r : float
+        Angle in radians
+    d : float
+        Angle in degrees
+    h : float
+        Angle in hours
+    arcs : float
+        Angle in arc-seconds
+
+    hms: angles.HMS
+        HMS object that represents the angle. ``hms.sign``, ``hms.hh``,
+        ``hms.mm`` and ``hms.ss`` gives the sexagesimal representation of the
+        angle in hours. We can assign values to these attributes. ``hms`` must
+        be assigned a tuple of the format (sign, hh, mm, ss).
+
+    dms : angles.DMS
+        DMS object that represents the angle.  ``dms.sign``, ``dms.dd``,
+        ``dms.mm`` and ``dms.ss`` gives the sexagesimal representation of the
+        angle in hours. We can assign values to these attributes. ``dms`` must
+        be assigned a tuple of the format (sign, hh, mm, ss).
+
+    ounit : str
+        Output unit. Influences string representation.
     pre : float
         The last part of the sexagesimal string is rounded to these
         many decimal points. This can be negative.
@@ -1218,6 +1240,9 @@ class Angle(object):
 
     Notes
     -----
+    Angle class can be initialized with keywords ``sg``, ``r``, ``d``, ``h`` or
+    ``arcs``. The first keyword found from the above is used as the input value.
+
     The output string representation depends on `ounit`, `pre` and
     `trunc` attributes.
 
@@ -1230,9 +1255,6 @@ class Angle(object):
     negative. If `trunc` is true then the number is truncated to `pre`
     places, else it is rounded.
 
-    The "repr", say using repr() function, of an angle object returns
-    the value in radians.
-
     See also
     --------
     phmsdms
@@ -1242,60 +1264,103 @@ class Angle(object):
 
     Examples
     --------
+    >>> from __future__ import print_function
+    >>> from angles import Angle
     >>> a = Angle(sg="12h34m16.592849219")
-    >>> print a.r, a.d, a.h, a.arcs
-    3.29115230606 188.569136872 12.5712757914 678848.892738
-    >>> print a.ounit
+    >>> a.r, a.d, a.h, a.arcs  # doctest: +NORMALIZE_WHITESPACE
+    (3.291152306055805, 188.56913687174583, 12.571275791449722, 678848.892738285)
+
+    >>> a.hms.sign, a.hms.hh, a.hms.mm, a.hms.ss
+    (1, 12, 34, 16.593)
+    >>> a.hms.hms
+    (1, 12, 34, 16.593)
+    >>> a.h
+    12.571275791449722
+
+    >>> a.dms.sign, a.dms.dd, a.dms.mm, a.dms.ss
+    (1, 188, 34, 8.893)
+    >>> a.dms.dms
+    (1, 188, 34, 8.893)
+    >>> a.d
+    188.56913687174583
+
+    >>> print(a.ounit)
     hours
-    >>> print a
+    >>> print(a)
     +12 34 16.593
-    >>> print a.pre, a.trunc
-    3 False
+    >>> a.pre, a.trunc
+    (3, False)
     >>> a.pre = 4
-    >>> print a
+    >>> print(a)
     +12 34 16.5928
     >>> a.pre = 3
     >>> a.trunc = True
-    >>> print a
+    >>> print(a)
     +12 34 16.592
 
     >>> a.ounit = "degrees"
-    >>> print a
-    +188 34 08.8927
+    >>> print(a)
+    +188 34 08.892
     >>> a.ounit = "radians"
-    >>> print a
+    >>> print(a)  # doctest: +SKIP
     3.29115230606
 
     >>> a.ounit = "degrees"
     >>> a.s1 = "DD "
     >>> a.s2 = "MM "
     >>> a.s3 = "SS"
-    >>> print a
+    >>> print(a)
     +188DD 34MM 08.892SS
-
-    Unicode characters can be used. But this will cause problems when
-    converting to string in Python 2.x, i.e., `print a` will raise
-    UnicodeEncodeError.
-
-    >>> a.s1 = u"\u00B0 "
-    >>> print unicode(a)
-    +12° 34MM 16.593SS
 
     The default unit is inferred from the input values.
 
     >>> a = Angle("35d24m34.5")
-    >>> print a
-    +35 24 34.500
-    >>> print a
+    >>> print(a)
     +35 24 34.500
     >>> a = Angle("35:24:34.5")
-    >>> print a
+    >>> print(a)
     +35 24 34.500
+    >>> a.ounit
+    'degrees'
     >>> a = Angle("35h24m34.5")
-    >>> print a
+    >>> print(a)
     +35 24 34.500
     >>> a.ounit
     'hours'
+
+    Assigning values to attributes changes the value of the angle, but ``ounit``
+    has to changed manually.
+
+    >>> a = Angle(r=10)
+    >>> a.d, a.h, a.r, a.arcs, a.ounit  # doctest: +NORMALIZE_WHITESPACE
+    (572.9577951308232, 38.197186342054884, 10, 2062648.0624709637, 'radians')
+
+    >>> a.d = 10
+    >>> a.d, a.h, a.r, a.arcs, a.ounit  # doctest: +NORMALIZE_WHITESPACE
+    (10.0, 0.6666666666666666, 0.17453292519943295, 36000.0, 'radians')
+
+    >>> a.dms.mm = 60
+    >>> a.d, a.h, a.r, a.arcs, a.ounit  # doctest: +NORMALIZE_WHITESPACE
+    (11.0, 0.7333333333333333, 0.19198621771937624, 39600.0, 'radians')
+
+    >>> a.dms.dms = (1, 12, 10, 5.234)
+    >>> a.d, a.h, a.r, a.arcs, a.ounit  # doctest: +NORMALIZE_WHITESPACE
+    (12.168120555555557, 0.8112080370370371, 0.21237376747404604,
+    43805.234000000004, 'radians')
+
+    >>> a.hms.hms = (1, 1, 1, 1)
+    >>> a.d, a.h, a.r, a.arcs, a.ounit  # doctest: +NORMALIZE_WHITESPACE
+    (15.254166666666668, 1.0169444444444444, 0.2662354329813017,
+    54915.00000000001, 'radians')
+
+    >>> print(a)  # doctest: +SKIP
+    0.266235432981
+    >>> a.ounit = 'hours'
+    >>> print(a)
+    +01 01 01.000
+    >>> a.ounit = 'degrees'
+    >>> print a
+    +15 15 15.000
 
     Angle objects can be added to and subtracted from each other.
 
@@ -1323,13 +1388,13 @@ class Angle(object):
     # The string representation will need to be changed when
     # normalizing method changes. So override __str__.
     _units = ("radians", "degrees", "hours")
-    _keyws = ('r', 'd', 'h', 'mm', 'ss', "sg")
+    _keyws = ('r', 'd', 'h', 'arcs', "sg")
     _raw = 0.0  # angle in radians
     _iunit = 0
     _ounit = "radians"
     _upper_trim = False
-    _lower = None
-    _upper = None
+    _lower = None  # always in radians
+    _upper = None  # always in radians
     pre = 3
     trunc = False
     s1 = " "
@@ -1338,12 +1403,10 @@ class Angle(object):
 
     def __init__(self, sg=None, **kwargs):
         if sg is not None:
-            # Insert this into kwargs so that the conditional below
-            # gets it.
-            kwargs['sg'] = str(sg)
+            kwargs['sg'] = sg
         x = (True if i in self._keyws else False for i in kwargs)
         if not all(x):
-            raise TypeError("Only {0} are allowed.".format(self._keyws))
+            raise TypeError("Only one of {0} are allowed.".format(self._keyws))
         if "sg" in kwargs:
             x = phmsdms(kwargs['sg'])
             if x['units'] not in self._units:
@@ -1360,19 +1423,21 @@ class Angle(object):
             self._setnorm(kwargs['r'])
             if len(kwargs) != 1:
                 warnings.warn("Only r = {0} used.".format(kwargs['r']))
-        else:
-            if "d" in kwargs:
-                self._iunit = 1
-                self._setnorm(d2r(sexa2deci(1, kwargs['d'],
-                                            kwargs.get('mm', 0.0),
-                                            kwargs.get('ss', 0.0))))
-                if "h" in kwargs:
-                    warnings.warn("h not used.")
-            elif "h" in kwargs:
-                self._iunit = 2
-                self._setnorm(h2r(sexa2deci(1, kwargs['h'],
-                                            kwargs.get('mm', 0.0),
-                                            kwargs.get('ss', 0.0))))
+        elif "d" in kwargs:
+            self._iunit = 1
+            self._setnorm(d2r(kwargs["d"]))
+            if len(kwargs) != 1:
+                warnings.warn("Only d = {0} used.".format(kwargs['d']))
+        elif "h" in kwargs:
+            self._iunit = 2
+            self._setnorm(h2r(kwargs['h']))
+            if len(kwargs) != 1:
+                warnings.warn("Only h = {0} used.".format(kwargs['h']))
+        elif "arcs" in kwargs:
+            self._iunit = 1
+            self._setnorm(arcs2r(kwargs['arcs']))
+            if len(kwargs) != 1:
+                warnings.warn("Only arcs = {0} used.".format(kwargs['arcs']))
 
         self._ounit = self._units[self._iunit]
 

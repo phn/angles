@@ -509,12 +509,17 @@ def test_angle_class_must_initialize_properly():
 
     # ignore h and mm
     with pytest.warns(UserWarning):
-        a = Angle(r=10, h=20, mm=1)
+        a = Angle(r=10, h=20)
 
-    a = Angle(r=10, h=20, mm=1)
+    a = Angle(r=10, h=20)
     assert a.r == 10
     assert a.ounit == 'radians'
     assert a.h == r2h(10)
+
+    a = Angle(h=20, d=10)
+    assert a.d == 10
+    assert a.ounit == 'degrees'
+    assert a.h == d2h(10)
 
 
 def test_angle_class_must_handle_assignments():

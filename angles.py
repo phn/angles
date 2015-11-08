@@ -288,8 +288,8 @@ def deci2sexa(deci, pre=3, trunc=False, lower=None, upper=None,
     upper_trim : bool
         If `lower` and `upper` are given and this is True, then if the
         first part of the sexagesimal number is equal to `upper`, it is
-        replaced with `lower`. This converts numbers such as "24 00
-        00.000" to "00 00 00.000". Default value is False.
+        replaced with `lower` (value used is int(lower)). This converts numbers
+        such as "24 00 00.000" to "00 00 00.000". Default value is False.
 
     Returns
     -------
@@ -314,9 +314,9 @@ def deci2sexa(deci, pre=3, trunc=False, lower=None, upper=None,
     `normalize` function for details.
 
     If `upper_trim` is True then, if after convertion to sexagesimal
-    the first part is equal to `upper`, it is replaced with `lower`.
-    This is useful in cases where numbers such as "24 00 00.00" needs
-    to be converted into "00 00 00.00"
+    the first part is equal to `upper`, it is replaced with `lower` (value used
+    is int(lower)). This is useful in cases where numbers such as "24 00 00.00"
+    needs to be converted into "00 00 00.00"
 
     The returned sign, first element of tuple, applies to the whole
     number and not just to a single part.
@@ -389,7 +389,7 @@ def deci2sexa(deci, pre=3, trunc=False, lower=None, upper=None,
     if lower is not None and upper is not None and upper_trim:
         # For example 24h0m0s => 0h0m0s.
         if hd == upper:
-            hd = lower
+            hd = int(lower)
 
     if hd == 0 and mm == 0 and ss == 0:
         sign = 1
@@ -1184,7 +1184,7 @@ class Angle(object):
     customized using other attributes. The angle can be access in HMS and DMS
     formats using appropriate attributes.
 
-    Converting to string using either str() or print will return a string
+    Converting to string using either str() or print(will return a string)
     representation of the angle.
 
     Parameters
@@ -1227,10 +1227,12 @@ class Angle(object):
         Output unit. Influences string representation.
     pre : float
         The last part of the sexagesimal string is rounded to these
-        many decimal points. This can be negative.
+        many decimal points. This can be negative. This also affects ``hms.ss``
+        and ``dms.ss`` attributes.
     trunc : bool
         If True, then the last part of the sexagesimal string is
-        truncated to `pre` decimal places, instead of rounding.
+        truncated to `pre` decimal places, instead of rounding. This also
+        affects ``hms.ss`` and ``dms.ss`` attributes.
     s1 : str
         Separator between first and second parts of sexagesimal string.
     s2 : str
@@ -1251,9 +1253,9 @@ class Angle(object):
     just the number itself.
 
     The attribute `pre` determines the number of decimal places in the
-    last part of the sexagesimal representation. This can be
-    negative. If `trunc` is true then the number is truncated to `pre`
-    places, else it is rounded.
+    last part of the sexagesimal representation i.e., ``hms.ss``, ``dms.ss``,
+    and string representation. This can be negative. If `trunc` is true then
+    the number is truncated to `pre` places, else it is rounded.
 
     See also
     --------
@@ -1359,7 +1361,7 @@ class Angle(object):
     >>> print(a)
     +01 01 01.000
     >>> a.ounit = 'degrees'
-    >>> print a
+    >>> print(a)
     +15 15 15.000
 
     Angle objects can be added to and subtracted from each other.
@@ -1537,24 +1539,7 @@ class AlphaAngle(Angle):
 
     This takes the same parameters as the `Angle` class, and has the
     same attributes as the `Angle` class. The attribute `ounit` is
-    read-only. Additonal attributes are given below.
-
-    Attributes
-    ----------
-    hms : tuple (int, int, int, float)
-        Sexagesimal, HMS, parts of the angle as tuple: first item is
-        sign, second is hours, third is minutes and the fourth is
-        seconds. Sign is 1 for positive and -1 for negative. The values
-        are affected by `pre` and `trunc`.
-    sign : int
-        Sign of the angle. 1 for positive and -1 for negative. Sign
-        applies to the whole angle and not to any single part.
-    hh : int
-        The hours part of `hms`, between [0,23]
-    mm : int
-        The minutes part of `hms`, between [0, 59]
-    ss : float
-        The seconds part of `hms`.
+    read-only.
 
     Notes
     -----
@@ -1569,50 +1554,50 @@ class AlphaAngle(Angle):
 
     Examples
     --------
+    >>> from __future__ import print_function
+    >>> from angles import AlphaAngle
     >>> a = AlphaAngle(d=180.5)
-    >>> print a
+    >>> print(a)
     +12HH 02MM 00.000SS
     >>> a = AlphaAngle(h=12.0)
-    >>> print a
+    >>> print(a)
     +12HH 00MM 00.000SS
     >>> a = AlphaAngle(h=-12.0)
 
     The attribute `ounit` is read-only.
 
     >>> a.ounit
-    "hours"
-    >>> print a
+    'hours'
+    >>> print(a)
     +12HH 00MM 00.000SS
 
-    If no keyword is provided then the input is taken to a sexagesimal
-    string and the units will be determined from it. The numerical
-    value of the angle in radians, hours, degrees and arc-seconds can
-    be extracted from appropriate attributes.
-
-    >>> a = angles.AlphaAngle("12h14m23.4s")
-    >>> print a
+    >>> a = AlphaAngle("12h14m23.4s")
+    >>> print(a)
     +12HH 14MM 23.400SS
-    >>> print a.r, a.d, a.h, a.arcs
-    3.20438087343 183.5975 12.2398333333 660951.0
+    >>> a.r, a.d, a.h, a.arcs
+    (3.204380873430289, 183.5975, 12.239833333333333, 660951.0)
 
-    The `hms` attribute contains the sexagesimal represenation. These
-    are also accessible as `a.sign`, a.hh`, `a.mm` and `a.ss`. The
-    `pre` and `trunc` attributes are taken into account while
-    generating the `hms` attribute.
+    The `hms` attribute contains instance of  HMS class that gives the
+    sexagesimal represenation of the angle in hours. The individual parts are
+    accessible as `hms.sign`, `hms.hh`, `hms.mm` and `hms.ss`. A tuple of all 4
+    attributes are available as `hms.hms`. The `pre` and `trunc` attributes are
+    taken into account while generating the `hms` attribute.
 
-    >>> a.hms
-    (1, 12, 0, 0.0)
+    The `dms` attribute is similar to HMS except it is an instance of the DMS
+    class and has attribute ``dd`` instead of ``hh``. It is the sexagesimal
+    represenation of the angle in degrees.
+
     >>> a = AlphaAngle(h=12.54678345)
-    >>> a.hms
+    >>> a.hms.hms
     (1, 12, 32, 48.42)
-    >>> a.sign, a.hh, a.mm, a.ss
+    >>> a.hms.sign, a.hms.hh, a.hms.mm, a.hms.ss
     (1, 12, 32, 48.42)
-    >>> print a
+    >>> print(a)
     +12HH 32MM 48.420SS
     >>> a.pre = 5
-    >>> a.hms
+    >>> a.hms.hms
     (1, 12, 32, 48.42042)
-    >>> print a
+    >>> print(a)
     +12HH 32MM 48.42042SS
 
     Separators can be changed.
@@ -1620,32 +1605,36 @@ class AlphaAngle(Angle):
     >>> a.s1 = " : "
     >>> a.s2 = " : "
     >>> a.s3 = ""
-    >>> print a
-    +12 : 32 : 48.420
+    >>> print(a)
+    +12 : 32 : 48.42042
+
+    >>> a.pre = 3
+    >>> a.dms.dms
+    (1, 188, 12, 6.306)
 
     Angles are properly normalized.
 
     >>> a = AlphaAngle(h=25.0)
-    >>> print a
+    >>> print(a)
     +01HH 00MM 00.000SS
     >>> a = AlphaAngle(h=-1.0)
-    >>> print a
+    >>> print(a)
     +23HH 00MM 00.000SS
 
     The sexagesimal parts are properly converted into their respective
     ranges.
 
-    >>> a.hh = 23
-    >>> a.mm = 59
-    >>> a.ss = 59.99999
-    >>> a.hms
+    >>> a.hms.hh = 23
+    >>> a.hms.mm = 59
+    >>> a.hms.ss = 59.99999
+    >>> a.hms.hms
     (1, 0, 0, 0.0)
-    >>> print a
+    >>> print(a)
     +00HH 00MM 00.000SS
     >>> a.pre = 5
-    >>> a.hms
+    >>> a.hms.hms
     (1, 23, 59, 59.99999)
-    >>> print a
+    >>> print(a)
     +23HH 59MM 59.99999SS
 
     Angles can be added to and subtracted from each other.
@@ -1654,10 +1643,10 @@ class AlphaAngle(Angle):
     >>> b = AlphaAngle(h=13.0)
     >>> c = a - b
     >>> c.h
-    -1.0000000000000007
+    23.0
     >>> c = a + b
-    >>> c.h
-    25.0
+    >>> round(c.h, 12)
+    1.0
 
     """
     _upper_trim = True
@@ -1665,7 +1654,7 @@ class AlphaAngle(Angle):
     _upper = h2r(24)
 
     def __init__(self, sg=None, **kwargs):
-        super(AlphaAngle, self).__init__(sg, **kwargs)
+        super(AlphaAngle, self).__init__(sg=sg, **kwargs)
         self.__ounit = "hours"
         self.s1 = "HH "
         self.s2 = "MM "
@@ -1747,16 +1736,16 @@ class DeltaAngle(Angle):
     Examples
     --------
     >>> a = DeltaAngle(d=-45.0)
-    >>> print a
+    >>> print(a)
     -45DD 00MM 00.000SS
     >>> a = DeltaAngle(d=180.0)
-    >>> print a
+    >>> print(a)
     +00DD 00MM 00.000SS
     >>> a = DeltaAngle(h=12.0)
-    >>> print a
+    >>> print(a)
     +00DD 00MM 00.000SS
     >>> a = DeltaAngle(sg="91d")
-    >>> print a
+    >>> print(a)
     +89DD 00MM 00.000SS
 
     Attribute `ounit` is always "degrees".
@@ -1770,9 +1759,9 @@ class DeltaAngle(Angle):
     be extracted from appropriate attributes.
 
     >>> a = DeltaAngle("12d23m14.2s")
-    >>> print a
+    >>> print(a)
     +12DD 23MM 14.200SS
-    >>> print a.r, a.d, a.h, a.arcs
+    >>> print(a.r, a.d, a.h, a.arcs)
     0.216198782581 12.3872777778 0.825818518519 44594.2
 
     The `dms` attribute contains the sexagesimal represenation. These
@@ -1797,16 +1786,16 @@ class DeltaAngle(Angle):
     >>> a.s1 = " : "
     >>> a.s2 = " : "
     >>> a.s3 = ""
-    >>> print a
+    >>> print(a)
     +12 : 20 : 45.555
 
     Angles are properly normalized.
 
     >>> a = DeltaAngle(d=-91.0)
-    >>> print a
+    >>> print(a)
     -89DD 00MM 00.000SS
     >>> a = DeltaAngle(d=91.0)
-    >>> print a
+    >>> print(a)
     +89DD 00MM 00.000SS
 
     The sexagesimal parts are properly normalized into their respective
@@ -1815,15 +1804,15 @@ class DeltaAngle(Angle):
     >>> a.dd = 89
     >>> a.mm = 59
     >>> a.ss = 59.9999
-    >>> print a
+    >>> print(a)
     +90DD 00MM 00.000SS
     >>> a.pre = 5
-    >>> print a
+    >>> print(a)
     +89DD 59MM 59.99990SS
     >>> a.dd = 89
     >>> a.mm = 60
     >>> a.ss = 60
-    >>> print a
+    >>> print(a)
     +89DD 59MM 00.000SS
 
     Angles can be added to and subtracted from each other.
@@ -1836,10 +1825,10 @@ class DeltaAngle(Angle):
     >>> c = a + b
     >>> c.d
     25.000000000000004
-    >>> print c
+    >>> print(c)
     +25DD 00MM 00.000SS
     >>> c = a - b
-    >>> print c
+    >>> print(c)
     -01DD 00MM 00.000SS
 
     """
@@ -1848,7 +1837,7 @@ class DeltaAngle(Angle):
     _upper = math.pi / 2
 
     def __init__(self, sg=None, **kwargs):
-        super(DeltaAngle, self).__init__(sg, **kwargs)
+        super(DeltaAngle, self).__init__(sg=sg, **kwargs)
         self.__ounit = "degrees"
         self.s1 = "DD "
         self.s2 = "MM "
@@ -2092,13 +2081,13 @@ class AngularPosition(object):
     Examples
     --------
     >>> a = angles.AngularPosition(hd="12 22 54.899 +15 49 20.57")
-    >>> print a
+    >>> print(a)
     +12HH 22MM 54.899SS +15DD 49MM 20.570SS
     >>> a = angles.AngularPosition(hd="12dd 22 54.899 +15 49 20.57")
-    >>> print a
+    >>> print(a)
     +00HH 49MM 31.660SS +15DD 49MM 20.570SS
     >>> a = angles.AngularPosition(hd="12d 22 54.899 +15 49 20.57")
-    >>> print a
+    >>> print(a)
     +00HH 49MM 31.660SS +15DD 49MM 20.570SS
 
     >>> pos1 = AngularPosition(alpha=12.0, delta=90.0)
@@ -2124,12 +2113,12 @@ class AngularPosition(object):
     >>> angles.r2d(pos1.sep(pos2))
     180.0
 
-    >>> print pos1
+    >>> print(pos1)
     +00HH 00MM 00.000SS +90DD 00MM 00.000SS
-    >>> print pos2
+    >>> print(pos2)
     +00HH 00MM 00.000SS +00DD 00MM 00.000SS
     >>> pos1.dlim = " | "
-    >>> print pos1
+    >>> print(pos1)
     +00HH 00MM 00.000SS | +90DD 00MM 00.000SS
 
     """

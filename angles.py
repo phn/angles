@@ -538,7 +538,7 @@ def fmt_angle(val, s1=" ", s2=" ", s3="", pre=3, trunc=False,
 
     """
     x = deci2sexa(val, pre=pre, trunc=trunc, lower=lower, upper=upper,
-                  upper_trim=upper_trim)
+                  upper_trim=upper_trim, b=b)
 
     left_digits_plus_deci_point = 3 if pre > 0 else 2
     p = "{3:0" + "{0}.{1}".format(pre + left_digits_plus_deci_point, pre) + "f}" + s3
@@ -1013,7 +1013,7 @@ class HMS(object):
         upper = r2h(a._upper) if a._upper is not None else None
         return deci2sexa(
             a.h, pre=a.pre, trunc=a.trunc, lower=lower, upper=upper,
-            upper_trim=a._upper_trim)
+            upper_trim=a._upper_trim, b=a._b)
 
     def __sethms(self, val):
         if len(val) != 4:
@@ -1032,7 +1032,8 @@ class HMS(object):
     def __setsign(self, sign):
         if sign not in (-1, 1):
             raise ValueError("Sign has to be -1 or 1.")
-        self.angle.h *= sign
+        x = self.hms
+        self.hms = (sign, x[1], x[2], x[3])
 
     sign = property(__getsign, __setsign, doc="Sign of HMS angle.")
 
@@ -1043,7 +1044,7 @@ class HMS(object):
         if not isinstance(val, int):
             raise ValueError("HH takes only integers.")
         x = self.hms
-        self.angle.h = sexa2deci(x[0], val, x[2], x[3])
+        self.hms = (x[0], val, x[2], x[3])
 
     hh = property(__gethh, __sethh, doc="HH of HMS angle.")
 
@@ -1054,7 +1055,7 @@ class HMS(object):
         if not isinstance(val, int):
             raise ValueError("MM takes integers only.")
         x = self.hms
-        self.angle.h = sexa2deci(x[0], x[1], val, x[3])
+        self.hms = (x[0], x[1], val, x[3])
 
     mm = property(__getmm, __setmm, doc="MM of HMS angle.")
 
@@ -1063,7 +1064,7 @@ class HMS(object):
 
     def __setss(self, val):
         x = self.hms
-        self.angle.h = sexa2deci(x[0], x[1], x[2], val)
+        self.hms = (x[0], x[1], x[2], val)
 
     ss = property(__getss, __setss, doc="SS of HMS angle.")
 
@@ -1073,7 +1074,7 @@ class HMS(object):
         upper = r2h(a._upper) if a._upper is not None else None
         return fmt_angle(
             a.h, s1=self.s1, s2=self.s2, s3=self.s3, pre=a.pre, trunc=a.trunc,
-            lower=lower, upper=upper, upper_trim=a._upper_trim)
+            lower=lower, upper=upper, upper_trim=a._upper_trim, b=a._b)
 
 
 class HMSDescriptor(object):
@@ -1099,7 +1100,7 @@ class DMS(object):
         upper = r2d(a._upper) if a._upper is not None else None
         return deci2sexa(
             a.d, pre=a.pre, trunc=a.trunc, lower=lower, upper=upper,
-            upper_trim=a._upper_trim)
+            upper_trim=a._upper_trim, b=a._b)
 
     def __setdms(self, val):
         if len(val) != 4:
@@ -1107,7 +1108,6 @@ class DMS(object):
                 "DMS must be of the form [sign, DD, MM, SS.ss..]")
         if val[0] not in (-1, 1):
             raise ValueError("Sign has to be -1 or 1.")
-
         self.angle.d = sexa2deci(*val)
 
     dms = property(__getdms, __setdms, doc="DMS tuple.")
@@ -1118,7 +1118,8 @@ class DMS(object):
     def __setsign(self, sign):
         if sign not in (-1, 1):
             raise ValueError("Sign has to be -1 or 1")
-        self.angle.d *= sign
+        x = self.dms
+        self.dms = (sign, x[1], x[2], x[3])
 
     sign = property(__getsign, __setsign, doc="Sign of DMS angle.")
 
@@ -1129,7 +1130,7 @@ class DMS(object):
         if not isinstance(val, int):
             raise ValueError("DD takes only integers.")
         x = self.dms
-        self.angle.d = sexa2deci(x[0], val, x[2], x[3])
+        self.dms = (x[0], val, x[2], x[3])
 
     dd = property(__getdd, __setdd, doc="DD of DMS angle.")
 
@@ -1140,7 +1141,7 @@ class DMS(object):
         if not isinstance(val, int):
             raise ValueError("MM takes only integers.")
         x = self.dms
-        self.angle.d = sexa2deci(x[0], x[1], val, x[3])
+        self.dms = (x[0], x[1], val, x[3])
 
     mm = property(__getmm, __setmm, doc="MM of DMS angle.")
 
@@ -1149,7 +1150,7 @@ class DMS(object):
 
     def __setss(self, val):
         x = self.dms
-        self.angle.d = sexa2deci(x[0], x[1], x[2], val)
+        self.dms = (x[0], x[1], x[2], val)
 
     ss = property(__getss, __setss, doc="SS of DMS angle.")
 
@@ -1159,7 +1160,7 @@ class DMS(object):
         upper = r2d(a._upper) if a._upper is not None else None
         return fmt_angle(
             a.d, s1=self.s1, s2=self.s2, s3=self.s3, pre=a.pre, trunc=a.trunc,
-            lower=lower, upper=upper, upper_trim=a._upper_trim)
+            lower=lower, upper=upper, upper_trim=a._upper_trim, b=a._b)
 
 
 class DMSDescriptor(object):
@@ -1397,6 +1398,7 @@ class Angle(object):
     _upper_trim = False
     _lower = None  # always in radians
     _upper = None  # always in radians
+    _b = False
     pre = 3
     trunc = False
     s1 = " "
@@ -1705,23 +1707,6 @@ class DeltaAngle(Angle):
     same attributes as the `Angle` class. The attribute `ounit` is
     read-only. Additonal attributes are given below.
 
-    Attributes
-    ----------
-    dms : tuple (int, int, int, float)
-        Sexagesimal, DMS, parts of the angle as tuple: first item is
-        sign, second is degrees, third is arc-minutes and the fourth is
-        arc-seconds. Sign is 1 for positive and -1 for negative. The
-        `pre` and `trunc` attributes affect the value of `dms`.
-    sign : int
-        Sign of the angle. 1 for positive and -1 for negative. Sign
-        applies to the whole angle and not to any single part.
-    dd : int
-        The degrees part of `dms`, between [-90, 90]
-    mm : int
-        The arc-minutes part of `dms`, between [0, 59]
-    ss : float
-        The arc-seconds part of `dms`.
-
     Notes
     -----
     The `pre` and `trunc` properties will affect both the string
@@ -1731,10 +1716,12 @@ class DeltaAngle(Angle):
 
     See also
     --------
-    Angle (for other attributes)
+    Angle (for common attributes)
 
     Examples
     --------
+    >>> from __future__ import print_function
+    >>> from angles import DeltaAngle
     >>> a = DeltaAngle(d=-45.0)
     >>> print(a)
     -45DD 00MM 00.000SS
@@ -1761,23 +1748,29 @@ class DeltaAngle(Angle):
     >>> a = DeltaAngle("12d23m14.2s")
     >>> print(a)
     +12DD 23MM 14.200SS
-    >>> print(a.r, a.d, a.h, a.arcs)
-    0.216198782581 12.3872777778 0.825818518519 44594.2
+    >>> a.r, a.d, a.h, a.arcs
+    (0.2161987825813487, 12.387277777777777, 0.8258185185185185, 44594.2)
 
-    The `dms` attribute contains the sexagesimal represenation. These
-    are also accessible as `a.sign`, a.dd`, `a.mm` and `a.ss`. The
-    `pre` and `trunc` attributes are taken into account.
+    The `dms` attribute contains instance of  DMS class that gives the
+    sexagesimal represenation of the angle in degrees. The individual parts are
+    accessible as `dms.sign`, `dms.dd`, `dms.mm` and `dms.ss`. A tuple of all 4
+    attributes are available as `dms.dms`. The `pre` and `trunc` attributes are
+    taken into account while generating the `dms` attribute.
+
+    The `hms` attribute is similar to DMS except it is an instance of the HMS
+    class and has attribute ``hh`` instead of ``dd``. It is the sexagesimal
+    represenation of the angle in hours.
 
     >>> a = DeltaAngle(d=12.1987546)
-    >>> a.dms
+    >>> a.dms.dms
     (1, 12, 11, 55.517)
     >>> a.pre = 5
-    >>> a.dms
+    >>> a.dms.dms
     (1, 12, 11, 55.51656)
-    >>> a.dd, a.mm, a.ss
+    >>> a.dms.dd, a.dms.mm, a.dms.ss
     (12, 11, 55.51656)
     >>> a.pre = 0
-    >>> a.dms
+    >>> a.dms.dms
     (1, 12, 11, 56.0)
 
     The separators can be changed.
@@ -1801,17 +1794,22 @@ class DeltaAngle(Angle):
     The sexagesimal parts are properly normalized into their respective
     ranges.
 
-    >>> a.dd = 89
-    >>> a.mm = 59
-    >>> a.ss = 59.9999
+    >>> a.dms.sign = 1
+    >>> a.dms.dd = 89
+    >>> a.dms.mm = 59
+    >>> a.dms.ss = 59.9999
+    >>> a.pre = 3
     >>> print(a)
     +90DD 00MM 00.000SS
     >>> a.pre = 5
     >>> print(a)
     +89DD 59MM 59.99990SS
-    >>> a.dd = 89
-    >>> a.mm = 60
-    >>> a.ss = 60
+
+    >>> a.dms.dms = (1, 0, 0, 0.0)
+    >>> a.dms.dd = 89
+    >>> a.dms.mm = 60
+    >>> a.dms.ss = 60
+    >>> a.pre = 3
     >>> print(a)
     +89DD 59MM 00.000SS
 
@@ -1835,6 +1833,7 @@ class DeltaAngle(Angle):
     _upper_trim = False
     _lower = -math.pi / 2
     _upper = math.pi / 2
+    _b = True
 
     def __init__(self, sg=None, **kwargs):
         super(DeltaAngle, self).__init__(sg=sg, **kwargs)
@@ -1845,7 +1844,7 @@ class DeltaAngle(Angle):
 
     def _setnorm(self, val):
         # overriding the method in Angle.
-        self._raw = normalize(val, lower=self._lower, upper=self._upper, b=True)
+        self._raw = normalize(val, lower=self._lower, upper=self._upper, b=self._b)
 
     def __getounit(self):
         return self.__ounit
@@ -1857,13 +1856,13 @@ class DeltaAngle(Angle):
         # Always DMS.
         return fmt_angle(self.d, s1=self.s1, s2=self.s2, s3=self.s3,
                          pre=self.pre, trunc=self.trunc,
-                         lower=r2d(self._lower), upper=r2d(self._upper), b=True)
+                         lower=r2d(self._lower), upper=r2d(self._upper), b=self._b)
 
     def __str__(self):
         # Always DMS.
         return fmt_angle(self.d, s1=self.s1, s2=self.s2, s3=self.s3,
                          pre=self.pre, trunc=self.trunc,
-                         lower=r2d(self._lower), upper=r2d(self._upper), b=True)
+                         lower=r2d(self._lower), upper=r2d(self._upper), b=self._b)
 
     def __add__(self, other):
         """Adds any type of angle to this."""

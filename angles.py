@@ -26,16 +26,20 @@ string representation is based on the sexagesimal value and hence it
 also reflects the precision and truncation settings.
 
 The `AngularPosition` class can be used for representing points on a
-sphere. It uses an `AlphaAngle` instance for storing the longitudinal
-angle, and a `DeltaAngle` instance for storing the latitudinal angle.
+sphere. It uses an `AlphaAngleSphere` instance for storing the longitudinal
+angle, and a `DeltaAngleSphere` instance for storing the latitudinal angle.
+The input values of angular coordinates are normalized to the simplest values.
+
 It can calcuate the separation and bearing, also called position angle,
 to another point on the sphere. The results for separation and
-bearing agree with those from the SLALIB (pyslalib) library (see the
-function `_test_with_slalib()`).
+bearing agree with those from the SLALIB (pyslalib) library. See tests in
+``test_angles.py`` for more details.
 
 The separation and bearing calculations do not use spherical
-trignometry. They involve Cartesian vectors, and objects of the class
+trignometry. They involve Cartesian vectors, and instances of the class
 `CartesianVector` are used for these calculations.
+
+See docstrings of classes and methods for more details.
 
 Almost all the methods of the classes call functions for performing
 calculations. If needed these functions can be used directly.

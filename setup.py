@@ -27,6 +27,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Topic :: Scientific/Engineering :: Astronomy',
         'Programming Language :: Python',
-        ],
+    ],
     py_modules=["angles"]
-    )
+)

@@ -2037,7 +2037,7 @@ class AngularPosition(object):
     AngularPosition can be used to work with points on a sphere. This
     object stores two attributes `alpha` and `delta` that represent the
     longitudinal and latitudinal angles, repectively. The former is of
-    type `AlphaAngle` and the latter is of type `DeltaAngle`.
+    type `AlphaAngleSphere` and the latter is of type `DeltaAngleSphere`.
 
     The string representation of AngularPosition is constructed using
     both alpha and delta.
@@ -2054,14 +2054,14 @@ class AngularPosition(object):
     Parameters
     ----------
     alpha: longitude/ra like angle in degrees
-    delta: latitude like angle in degrees
+    delta: latitude/dec like angle in degrees
 
     Attributes
     ----------
     alpha : AlphaAngleSphere
-        The longitudinal angle.
+        The longitude like angle.
     delta : DeltaAngleSphere
-        The lattudinal angle.
+        The latitude like angle.
     dlim : str
         Delimiter to use between `alpha` and `delta` angles in string
         representation.
@@ -2079,43 +2079,62 @@ class AngularPosition(object):
 
     Examples
     --------
-    >>> a = angles.AngularPosition(hd="12 22 54.899 +15 49 20.57")
+    >>> from __future__ import print_function
+    >>> from angles import AngularPosition, r2d
+
+    >>> a = AngularPosition.from_hd("12 22 54.899 +15 49 20.57")
     >>> print(a)
     +12HH 22MM 54.899SS +15DD 49MM 20.570SS
-    >>> a = angles.AngularPosition(hd="12dd 22 54.899 +15 49 20.57")
+    >>> a = AngularPosition.from_hd("12dd 22 54.899 +15 49 20.57")
     >>> print(a)
     +00HH 49MM 31.660SS +15DD 49MM 20.570SS
-    >>> a = angles.AngularPosition(hd="12d 22 54.899 +15 49 20.57")
+    >>> a = AngularPosition.from_hd("12d 22 54.899 +15 49 20.57")
     >>> print(a)
     +00HH 49MM 31.660SS +15DD 49MM 20.570SS
+
+    The input values are normalized to their simplest representation on a
+    sphere.
+
+    >>> a = AngularPosition(alpha=165, delta=-91)  # alpha should flip by 180 degrees
+    >>> round(a.alpha.d , 12), round(a.delta.d, 12)
+    (345.0, -89.0)
+    >>> a.delta.d = -91 # alpha should now do another 180 flip and come back to 165
+    >>> round(a.alpha.d, 12), round(a.delta.d, 12)
+    (165.0, -89.0)
+    >>> a.delta.d = 89  # there should be no change in normalized angles
+    >>> round(a.alpha.d, 12), round(a.delta.d, 12)
+    (165.0, 89.0)
+    >>> a.alpha.d = -180  # alpha should normalize to 180 delta shouldn't change
+    >>> round(a.alpha.d, 12), round(a.delta.d, 12)
+    (180.0, 89.0)
 
     >>> pos1 = AngularPosition(alpha=12.0, delta=90.0)
     >>> pos2 = AngularPosition(alpha=12.0, delta=0.0)
-    >>> angles.r2d(pos2.bear(pos1))
+    >>> r2d(pos2.bear(pos1))
     0.0
-    >>> angles.r2d(pos1.bear(pos2))
+    >>> r2d(pos1.bear(pos2))
     0.0
-    >>> angles.r2d(pos1.sep(pos2))
+    >>> r2d(pos1.sep(pos2))
     90.0
     >>> pos1.alpha.h = 0.0
     >>> pos2.alpha.h = 0.0
-    >>> angles.r2d(pos1.sep(pos2))
+    >>> r2d(pos1.sep(pos2))
     90.0
-    >>> angles.r2d(pos2.bear(pos1))
+    >>> r2d(pos2.bear(pos1))
     0.0
-    >>> angles.r2d(pos1.bear(pos2))
+    >>> r2d(pos1.bear(pos2))
     0.0
 
     >>> pos2.delta.d = -90
-    >>> angles.r2d(pos1.bear(pos2))
+    >>> r2d(pos1.bear(pos2))
     0.0
-    >>> angles.r2d(pos1.sep(pos2))
+    >>> r2d(pos1.sep(pos2))
     180.0
 
     >>> print(pos1)
     +00HH 00MM 00.000SS +90DD 00MM 00.000SS
     >>> print(pos2)
-    +00HH 00MM 00.000SS +00DD 00MM 00.000SS
+    +00HH 00MM 00.000SS -90DD 00MM 00.000SS
     >>> pos1.dlim = " | "
     >>> print(pos1)
     +00HH 00MM 00.000SS | +90DD 00MM 00.000SS
